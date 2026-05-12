@@ -1,5 +1,5 @@
-using dance.API.Data;  // ? ÄÎÁÀÂÈÒÜ (äëÿ ïîäêëş÷åíèÿ AppDbContext)
-using Microsoft.EntityFrameworkCore;  // ? ÄÎÁÀÂÈÒÜ (äëÿ UseSqlServer)
+ï»¿using dance.API.Data;  // â† Ğ”ĞĞ‘ĞĞ’Ğ˜Ğ¢Ğ¬ (Ğ´Ğ»Ñ Ğ¿Ğ¾Ğ´ĞºĞ»ÑÑ‡ĞµĞ½Ğ¸Ñ AppDbContext)
+using Microsoft.EntityFrameworkCore;  // â† Ğ”ĞĞ‘ĞĞ’Ğ˜Ğ¢Ğ¬ (Ğ´Ğ»Ñ UseSqlServer)
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,7 +10,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// === ÄÎÁÀÂÜÒÅ İÒÎÒ ÁËÎÊ ===
+// === Ğ”ĞĞ‘ĞĞ’Ğ¬Ğ¢Ğ• Ğ­Ğ¢ĞĞ¢ Ğ‘Ğ›ĞĞš ===
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 // ========================

@@ -15,7 +15,7 @@ namespace dance.API.Controllers
                 {
                     Group_id = 1,
                     Name = "Первая",
-                    Activity_id = 1,
+                    Direction_id = 1,
                     Trainer_id = 1,
                     Status = "Активна"
                 }

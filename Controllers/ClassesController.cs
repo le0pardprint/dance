@@ -16,8 +16,8 @@ namespace dance.API.Controllers
                     Class_id = 2,
                     Group_id = 1,
                     Trainer_id = 2,
-                    Date = new DateOnly(2026, 5, 12),
-                    Time = new TimeOnly(14, 30),            // 14:30
+                    Date = new DateTime(2026, 5, 12),
+                    Time = new TimeSpan(14, 30, 0),            // 14:30
                     Status = "Подтверждено"
                 }
             };

@@ -1,7 +1,10 @@
-﻿namespace dance.API.Models
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace dance.API.Models
 {
     public class Trainer
     {
+        [Key]
         public int Trainer_id { get; set; }
         public string LastName { get; set; }
         public string FirstName { get; set; }
