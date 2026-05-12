@@ -12,7 +12,7 @@ using dance.API.Data;
 namespace dance.API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260512215043_InitialCreate")]
+    [Migration("20260512215633_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
