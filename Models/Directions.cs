@@ -1,7 +1,10 @@
-﻿namespace dance.API.Models
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace dance.API.Models
 {
     public class Direction
     {
+        [Key]
         public int Direction_id { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
