@@ -1,0 +1,36 @@
+# Папки сборки .NET
+bin/
+obj/
+publish/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userprefs
+
+# Rider
+.idea/
+*.sln.iml
+
+# Entity Framework Migrations (если хотите исключить)
+# Migrations/
+
+# Базы данных
+*.db
+*.sqlite
+*.mdf
+*.ldf
+
+# Логи и временные файлы
+*.log
+*.tmp
+*.temp
+
+# Файлы с секретами
+appsettings.Development.json
+secrets.json
+
+# Системные файлы
+Thumbs.db
+.DS_Store

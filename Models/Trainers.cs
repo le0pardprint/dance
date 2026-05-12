@@ -1,0 +1,12 @@
+﻿namespace dance.API.Models
+{
+    public class Trainer
+    {
+        public int Trainer_id { get; set; }
+        public string LastName { get; set; }
+        public string FirstName { get; set; }
+        public int Direction_id { get; set; }
+        public string Phone { get; set; }
+        public string Email { get; set; }
+    }
+}
