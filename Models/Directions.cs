@@ -10,5 +10,7 @@ namespace dance.API.Models
         public string Description { get; set; }
         public string AgeGroup { get; set; }
         public string Level { get; set; }
+
+        public ICollection<Group>? Groups { get; set; }
     }
 }

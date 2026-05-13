@@ -9,5 +9,8 @@ namespace dance.API.Models
         public int Client_id { get; set; }
         public int Group_id { get; set; }
         public DateTime Registration_date { get; set; }
+
+        public Client? Client { get; set; }
+        public Group? Group { get; set; }
     }
 }

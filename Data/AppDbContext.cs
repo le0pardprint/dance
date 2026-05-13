@@ -20,5 +20,39 @@ namespace dance.API.Data
         public DbSet<Registration> Registrations { get; set; }
         public DbSet<Subscription> Subscriptions { get; set; }
         public DbSet<AttendanceRecord> AttendanceRecords { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            // Classes → Trainer (отключаем каскадное удаление)
+            modelBuilder.Entity<Class>()
+                .HasOne(c => c.Trainer)
+                .WithMany(t => t.Classes)
+                .HasForeignKey(c => c.Trainer_id)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Classes → Group (отключаем каскадное удаление)
+            modelBuilder.Entity<Class>()
+                .HasOne(c => c.Group)
+                .WithMany(g => g.Classes)
+                .HasForeignKey(c => c.Group_id)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // AttendanceRecord → Client
+            modelBuilder.Entity<AttendanceRecord>()
+                .HasOne(a => a.Client)
+                .WithMany(c => c.AttendanceRecords)
+                .HasForeignKey(a => a.Client_id)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // AttendanceRecord → Class
+            modelBuilder.Entity<AttendanceRecord>()
+                .HasOne(a => a.Class)
+                .WithMany(c => c.AttendanceRecords)
+                .HasForeignKey(a => a.Class_id)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            base.OnModelCreating(modelBuilder);
+
+        }
     }
 }

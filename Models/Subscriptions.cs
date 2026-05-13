@@ -13,5 +13,8 @@ namespace dance.API.Models
         [Column(TypeName = "decimal(18,2)")]
         public decimal Amount { get; set; }
         public string Status { get; set; }
+
+        public Client? Client { get; set; }
+        public Group? Group { get; set; }
     }
 }

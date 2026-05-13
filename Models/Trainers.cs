@@ -11,5 +11,9 @@ namespace dance.API.Models
         public int Direction_id { get; set; }
         public string Phone { get; set; }
         public string Email { get; set; }
+
+        public Direction? Direction { get; set; }        // связь с направлением
+        public ICollection<Group>? Groups { get; set; }   // группы тренера
+        public ICollection<Class>? Classes { get; set; }  // занятия тренера
     }
 }

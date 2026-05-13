@@ -1,5 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace dance.API.Models
 {
@@ -12,5 +12,13 @@ namespace dance.API.Models
         public DateTime Date { get; set; }
         public TimeSpan Time { get; set; }
         public string Status { get; set; }
+
+            [ForeignKey("Group_id")]
+            public Group? Group { get; set; }
+
+            [ForeignKey("Trainer_id")]
+            public Trainer? Trainer { get; set; }
+
+            public ICollection<AttendanceRecord>? AttendanceRecords { get; set; }
     }
 }

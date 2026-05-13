@@ -12,7 +12,7 @@ using dance.API.Data;
 namespace dance.API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260512215633_InitialCreate")]
+    [Migration("20260513195238_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -45,6 +45,10 @@ namespace dance.API.Migrations
 
                     b.HasKey("Record_id");
 
+                    b.HasIndex("Class_id");
+
+                    b.HasIndex("Client_id");
+
                     b.ToTable("AttendanceRecords");
                 });
 
@@ -73,6 +77,10 @@ namespace dance.API.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Class_id");
+
+                    b.HasIndex("Group_id");
+
+                    b.HasIndex("Trainer_id");
 
                     b.ToTable("Classes");
                 });
@@ -162,6 +170,10 @@ namespace dance.API.Migrations
 
                     b.HasKey("Group_id");
 
+                    b.HasIndex("Direction_id");
+
+                    b.HasIndex("Trainer_id");
+
                     b.ToTable("Groups");
                 });
 
@@ -176,13 +188,23 @@ namespace dance.API.Migrations
                     b.Property<int>("Client_id")
                         .HasColumnType("int");
 
+                    b.Property<int?>("Client_id1")
+                        .HasColumnType("int");
+
                     b.Property<int>("Group_id")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("Group_id1")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("Registration_date")
                         .HasColumnType("datetime2");
 
                     b.HasKey("Registration_id");
+
+                    b.HasIndex("Client_id1");
+
+                    b.HasIndex("Group_id1");
 
                     b.ToTable("Registrations");
                 });
@@ -201,7 +223,13 @@ namespace dance.API.Migrations
                     b.Property<int>("Client_id")
                         .HasColumnType("int");
 
+                    b.Property<int?>("Client_id1")
+                        .HasColumnType("int");
+
                     b.Property<int>("Group_id")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("Group_id1")
                         .HasColumnType("int");
 
                     b.Property<string>("Status")
@@ -209,6 +237,10 @@ namespace dance.API.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Sub_id");
+
+                    b.HasIndex("Client_id1");
+
+                    b.HasIndex("Group_id1");
 
                     b.ToTable("Subscriptions");
                 });
@@ -222,6 +254,9 @@ namespace dance.API.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Trainer_id"));
 
                     b.Property<int>("Direction_id")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("Direction_id1")
                         .HasColumnType("int");
 
                     b.Property<string>("Email")
@@ -242,7 +277,136 @@ namespace dance.API.Migrations
 
                     b.HasKey("Trainer_id");
 
+                    b.HasIndex("Direction_id1");
+
                     b.ToTable("Trainers");
+                });
+
+            modelBuilder.Entity("dance.API.Models.AttendanceRecord", b =>
+                {
+                    b.HasOne("dance.API.Models.Class", "Class")
+                        .WithMany("AttendanceRecords")
+                        .HasForeignKey("Class_id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("dance.API.Models.Client", "Client")
+                        .WithMany("AttendanceRecords")
+                        .HasForeignKey("Client_id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Class");
+
+                    b.Navigation("Client");
+                });
+
+            modelBuilder.Entity("dance.API.Models.Class", b =>
+                {
+                    b.HasOne("dance.API.Models.Group", "Group")
+                        .WithMany("Classes")
+                        .HasForeignKey("Group_id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("dance.API.Models.Trainer", "Trainer")
+                        .WithMany("Classes")
+                        .HasForeignKey("Trainer_id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Group");
+
+                    b.Navigation("Trainer");
+                });
+
+            modelBuilder.Entity("dance.API.Models.Group", b =>
+                {
+                    b.HasOne("dance.API.Models.Direction", "Direction")
+                        .WithMany("Groups")
+                        .HasForeignKey("Direction_id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("dance.API.Models.Trainer", "Trainer")
+                        .WithMany("Groups")
+                        .HasForeignKey("Trainer_id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Direction");
+
+                    b.Navigation("Trainer");
+                });
+
+            modelBuilder.Entity("dance.API.Models.Registration", b =>
+                {
+                    b.HasOne("dance.API.Models.Client", "Client")
+                        .WithMany("Registrations")
+                        .HasForeignKey("Client_id1");
+
+                    b.HasOne("dance.API.Models.Group", "Group")
+                        .WithMany()
+                        .HasForeignKey("Group_id1");
+
+                    b.Navigation("Client");
+
+                    b.Navigation("Group");
+                });
+
+            modelBuilder.Entity("dance.API.Models.Subscription", b =>
+                {
+                    b.HasOne("dance.API.Models.Client", "Client")
+                        .WithMany("Subscriptions")
+                        .HasForeignKey("Client_id1");
+
+                    b.HasOne("dance.API.Models.Group", "Group")
+                        .WithMany()
+                        .HasForeignKey("Group_id1");
+
+                    b.Navigation("Client");
+
+                    b.Navigation("Group");
+                });
+
+            modelBuilder.Entity("dance.API.Models.Trainer", b =>
+                {
+                    b.HasOne("dance.API.Models.Direction", "Direction")
+                        .WithMany()
+                        .HasForeignKey("Direction_id1");
+
+                    b.Navigation("Direction");
+                });
+
+            modelBuilder.Entity("dance.API.Models.Class", b =>
+                {
+                    b.Navigation("AttendanceRecords");
+                });
+
+            modelBuilder.Entity("dance.API.Models.Client", b =>
+                {
+                    b.Navigation("AttendanceRecords");
+
+                    b.Navigation("Registrations");
+
+                    b.Navigation("Subscriptions");
+                });
+
+            modelBuilder.Entity("dance.API.Models.Direction", b =>
+                {
+                    b.Navigation("Groups");
+                });
+
+            modelBuilder.Entity("dance.API.Models.Group", b =>
+                {
+                    b.Navigation("Classes");
+                });
+
+            modelBuilder.Entity("dance.API.Models.Trainer", b =>
+                {
+                    b.Navigation("Classes");
+
+                    b.Navigation("Groups");
                 });
 #pragma warning restore 612, 618
         }
