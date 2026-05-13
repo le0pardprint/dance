@@ -14,6 +14,8 @@ namespace dance.API.Models
         public decimal Amount { get; set; }
         public string Status { get; set; }
 
+        public DateTime CreatedAt { get; set; }  // Дата создания абонемента
+
         public Client? Client { get; set; }
         public Group? Group { get; set; }
     }

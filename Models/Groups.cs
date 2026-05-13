@@ -19,5 +19,7 @@ namespace dance.API.Models
         public Trainer? Trainer { get; set; }
 
         public ICollection<Class>? Classes { get; set; }
+        public ICollection<Registration>? Registrations { get; set; }
+        public ICollection<Subscription>? Subscriptions { get; set; }
     }
 }

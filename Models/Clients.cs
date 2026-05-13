@@ -12,10 +12,13 @@ namespace dance.API.Models
         public string Phone { get; set; }
         public string Email { get; set; }
 
+        // Связь с User
+        public int? User_id { get; set; }
+        public User? User { get; set; }
+
         // Навигационные свойства
         public ICollection<AttendanceRecord>? AttendanceRecords { get; set; }
         public ICollection<Registration>? Registrations { get; set; }
         public ICollection<Subscription>? Subscriptions { get; set; }
-        public ICollection<User>? Users { get; set; }
     }
 }
