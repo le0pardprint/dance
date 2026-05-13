@@ -20,6 +20,8 @@ namespace dance.API.Data
         public DbSet<Registration> Registrations { get; set; }
         public DbSet<Subscription> Subscriptions { get; set; }
         public DbSet<AttendanceRecord> AttendanceRecords { get; set; }
+        public DbSet<User> Users { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
