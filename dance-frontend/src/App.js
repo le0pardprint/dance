@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const API_URL = 'https://localhost:7127';
+const API_URL = 'https://localhost:5052';
 
 // Утилита: читаем поле без учёта регистра (Token / token / TOKEN — всё найдётся)
 function getField(obj, ...keys) {
