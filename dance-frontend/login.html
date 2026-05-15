@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CRM Школа танцев — Вход</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="login-page">
+
+  <div class="login-box">
+    <div class="login-logo">💃</div>
+    <h1>Школа танцев</h1>
+    <p class="login-sub">CRM система управления</p>
+
+    <div id="login-error" class="error-box" style="display:none"></div>
+
+    <div class="field">
+      <label for="email">Email</label>
+      <input type="email" id="email" placeholder="your@email.com" />
+    </div>
+    <div class="field">
+      <label for="password">Пароль</label>
+      <input type="password" id="password" placeholder="••••••••" />
+    </div>
+    <button class="btn-login" id="login-btn">Войти</button>
+
+    <p class="login-api" id="api-url"></p>
+  </div>
+
+  <script src="api.js"></script>
+  <script>
+    document.getElementById('api-url').textContent = API_URL;
+
+    // Если уже залогинен — редиректим
+    if (getToken() && getRole()) {
+      window.location.href = 'dashboard.html';
+    }
+
+    document.getElementById('login-btn').addEventListener('click', doLogin);
+    document.getElementById('password').addEventListener('keydown', e => {
+      if (e.key === 'Enter') doLogin();
+    });
+
+    async function doLogin() {
+      const email    = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const errBox   = document.getElementById('login-error');
+      const btn      = document.getElementById('login-btn');
+
+      errBox.style.display = 'none';
+      if (!email || !password) {
+        errBox.textContent = 'Заполните email и пароль';
+        errBox.style.display = 'block';
+        return;
+      }
+
+      btn.textContent = 'Вход…';
+      btn.disabled = true;
+
+      try {
+        const res  = await fetch(`${API_URL}/api/Auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
+        const json = await res.json();
+
+        if (res.ok) {
+          const token  = getField(json, 'token');
+          const role   = getField(json, 'role');
+          const userId = getField(json, 'userId', 'user_id');
+          const em     = getField(json, 'email');
+
+          if (!token) {
+            showErr('Сервер не вернул токен. Проверьте camelCase в Program.cs');
+            return;
+          }
+
+          saveAuth(token, role, em, userId);
+          window.location.href = 'dashboard.html';
+        } else {
+          showErr(getField(json, 'message') ?? 'Неверный email или пароль');
+        }
+      } catch {
+        showErr(`Нет соединения с ${API_URL} — убедитесь что бэкенд запущен`);
+      } finally {
+        btn.textContent = 'Войти';
+        btn.disabled = false;
+      }
+    }
+
+    function showErr(text) {
+      const b = document.getElementById('login-error');
+      b.textContent = text;
+      b.style.display = 'block';
+    }
+  </script>
+</body>
+</html>

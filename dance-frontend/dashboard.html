@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CRM Школа танцев</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ═══ SIDEBAR ════════════════════════════════════════════════════════════ -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="s-title">Школа танцев</div>
+      <div class="s-sub">CRM система</div>
+    </div>
+    <div class="sidebar-user">
+      <div class="avatar" id="sb-avatar">?</div>
+      <div>
+        <div class="u-name" id="sb-email">—</div>
+        <div class="u-role" id="sb-role">—</div>
+      </div>
+    </div>
+    <nav class="nav" id="sidebar-nav"></nav>
+    <div class="sidebar-footer">
+      <button class="btn-logout" id="logout-btn">← Выйти</button>
+    </div>
+  </aside>
+
+  <!-- ═══ MAIN ════════════════════════════════════════════════════════════════ -->
+  <div class="main">
+    <header class="topbar">
+      <h2 id="page-title">Главная</h2>
+      <span class="topbar-url" id="api-label"></span>
+    </header>
+    <div class="content">
+
+      <!-- CLIENT -->
+      <div class="page" id="page-client">
+        <div id="client-stats"></div>
+        <div class="card">
+          <div class="card-body">
+            <div class="tabs">
+              <button class="tab-btn active" data-tab="client-schedule">📅 Расписание</button>
+              <button class="tab-btn" data-tab="client-groups">🏫 Мои группы</button>
+              <button class="tab-btn" data-tab="client-payments">💳 Оплаты</button>
+            </div>
+            <div class="tab-pane active" id="client-schedule"></div>
+            <div class="tab-pane" id="client-groups"></div>
+            <div class="tab-pane" id="client-payments"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TRAINER -->
+      <div class="page" id="page-trainer">
+        <div id="trainer-stats"></div>
+        <div class="card">
+          <div class="card-body">
+            <div class="tabs">
+              <button class="tab-btn active" data-tab="trainer-schedule">📅 Расписание</button>
+              <button class="tab-btn" data-tab="trainer-groups">👥 Мои группы</button>
+            </div>
+            <div class="tab-pane active" id="trainer-schedule"></div>
+            <div class="tab-pane" id="trainer-groups"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DIRECTOR -->
+      <div class="page" id="page-director">
+        <div id="director-stats"></div>
+        <div class="card">
+          <div class="card-body">
+            <div class="tabs">
+              <button class="tab-btn active" data-tab="dir-occupancy">📊 Заполненность</button>
+              <button class="tab-btn" data-tab="dir-popularity">🎯 Направления</button>
+              <button class="tab-btn" data-tab="dir-workload">🏋 Тренеры</button>
+            </div>
+            <div class="tab-pane active" id="dir-occupancy"></div>
+            <div class="tab-pane" id="dir-popularity"></div>
+            <div class="tab-pane" id="dir-workload"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACCOUNTANT -->
+      <div class="page" id="page-accountant">
+        <div id="acc-stats"></div>
+        <div class="card">
+          <div class="card-body">
+            <div class="tabs">
+              <button class="tab-btn active" data-tab="acc-summary">📋 Сводка</button>
+              <button class="tab-btn" data-tab="acc-revenue">💰 Выручка</button>
+              <button class="tab-btn" data-tab="acc-debts">⚠️ Долги</button>
+            </div>
+            <div class="tab-pane active" id="acc-summary"></div>
+            <div class="tab-pane" id="acc-revenue"></div>
+            <div class="tab-pane" id="acc-debts"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ADMIN -->
+      <div class="page" id="page-admin">
+        <div id="admin-stats"></div>
+        <div class="card">
+          <div class="card-head">
+            <h3>База данных</h3>
+            <button class="btn btn-primary btn-sm" id="add-client-btn" style="display:none">+ Клиент</button>
+          </div>
+          <div class="card-body">
+            <div class="tabs">
+              <button class="tab-btn active" data-tab="admin-clients">👥 Клиенты</button>
+              <button class="tab-btn" data-tab="admin-trainers">🎽 Тренеры</button>
+              <button class="tab-btn" data-tab="admin-groups">🏫 Группы</button>
+            </div>
+            <div class="tab-pane active" id="admin-clients"></div>
+            <div class="tab-pane" id="admin-trainers"></div>
+            <div class="tab-pane" id="admin-groups"></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ═══ MODAL: добавить клиента ════════════════════════════════════════════ -->
+<div class="modal-overlay" id="add-client-modal">
+  <div class="modal">
+    <div class="modal-head"><h3>Новый клиент</h3></div>
+    <div class="modal-body">
+      <div id="modal-error" class="error-box" style="display:none"></div>
+      <div class="form-row">
+        <div class="field"><label>Фамилия *</label><input id="f-lastName" /></div>
+        <div class="field"><label>Имя *</label><input id="f-firstName" /></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Возраст</label><input id="f-age" type="number" /></div>
+        <div class="field"><label>Телефон</label><input id="f-phone" placeholder="+7..." /></div>
+      </div>
+      <div class="field"><label>Email</label><input id="f-email" type="email" placeholder="mail@example.com" /></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="modal-cancel">Отмена</button>
+      <button class="btn btn-primary" id="modal-save">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<script src="api.js"></script>
+<script src="dashboard.js"></script>
+</body>
+</html>
