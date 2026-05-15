@@ -7,24 +7,21 @@ using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ─── Controllers + JSON ───────────────────────────────────────────────────────
+// Controllers + JSON
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
         options.JsonSerializerOptions.WriteIndented = true;
-
         options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
-
         options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
     });
 
-// Swagger 
+// Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new() { Title = "Dance School API", Version = "v1" });
-
     c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -67,7 +64,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ),
             ClockSkew = TimeSpan.FromMinutes(5)
         };
-
         options.Events = new JwtBearerEvents
         {
             OnAuthenticationFailed = context =>
@@ -88,12 +84,16 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowReact", policy =>
+    options.AddPolicy("AllowFrontend", policy =>
     {
         policy
             .WithOrigins(
-                "http://localhost:3000",   // React dev server (Create React App)
-                "http://localhost:5173"    
+                "http://localhost:3000",      // React CRA
+                "http://localhost:5173",      // Vite
+                "http://127.0.0.1:5500",      // VS Code Live Server
+                "http://localhost:5500",      // VS Code Live Server (альтернативный)
+                "http://localhost:8080",      // другой вариант
+                "null"                        // открытие файла напрямую (file://)
             )
             .AllowAnyMethod()
             .AllowAnyHeader()
@@ -103,21 +103,21 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// Pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "Dance School API v1");
-        c.RoutePrefix = "swagger"; // открывается на /swagger
+        c.RoutePrefix = "swagger";
     });
 }
 
-app.UseHttpsRedirection();
 
-app.UseCors("AllowReact");        // 1. CORS — до всего остального
-app.UseAuthentication();          // 2. Проверяем токен
-app.UseAuthorization();           // 3. Проверяем права
+app.UseCors("AllowFrontend");     // 1. CORS
+app.UseAuthentication();          // 2. Токен
+app.UseAuthorization();           // 3. Права
 
 app.MapControllers();
 
