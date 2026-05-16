@@ -1,4 +1,3 @@
-// ─── Guard: не залогинен → на логин ──────────────────────────────────────────
 if (!getToken() || !getRole()) {
   window.location.href = 'login.html';
 }
@@ -24,14 +23,12 @@ const ROLE_NAV = {
   Admin:     [{ page: 'admin',      icon: '⚙️', label: 'Управление' }],
 };
 
-// ─── Init shell ───────────────────────────────────────────────────────────────
 document.getElementById('api-label').textContent  = API_URL;
 document.getElementById('page-title').textContent = PAGE_TITLES[ROLE] ?? 'Главная';
 document.getElementById('sb-email').textContent   = EMAIL ?? '—';
 document.getElementById('sb-role').textContent    = (ROLE_LABELS[ROLE] ?? ROLE);
 document.getElementById('sb-avatar').textContent  = EMAIL ? EMAIL[0].toUpperCase() : '?';
 
-// Sidebar nav
 const navEl = document.getElementById('sidebar-nav');
 (ROLE_NAV[ROLE] ?? []).forEach(item => {
   const el = document.createElement('div');
@@ -40,40 +37,32 @@ const navEl = document.getElementById('sidebar-nav');
   navEl.appendChild(el);
 });
 
-// Show role page
 document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
 const rolePage = document.getElementById(`page-${ROLE.toLowerCase()}`);
 if (rolePage) rolePage.classList.add('active');
 
-// Logout
 document.getElementById('logout-btn').addEventListener('click', () => {
   clearAuth();
   window.location.href = 'login.html';
 });
 
-// ─── Tabs ─────────────────────────────────────────────────────────────────────
 document.querySelectorAll('.tabs').forEach(tabsEl => {
   tabsEl.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const paneId = btn.dataset.tab;
       const card   = btn.closest('.card-body') || btn.closest('.card');
-
-      // Deactivate all in this group
       tabsEl.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-
       card.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
       const pane = document.getElementById(paneId);
       if (pane) {
         pane.classList.add('active');
-        // Lazy load if empty
         if (!pane.dataset.loaded) loadPane(paneId);
       }
     });
   });
 });
 
-// ─── Cache ────────────────────────────────────────────────────────────────────
 const cache = {};
 
 async function fetchCached(key, url) {
@@ -83,7 +72,6 @@ async function fetchCached(key, url) {
   return ok ? data : null;
 }
 
-// ─── Pane loader ─────────────────────────────────────────────────────────────
 async function loadPane(paneId) {
   const el = document.getElementById(paneId);
   if (!el) return;
@@ -91,11 +79,9 @@ async function loadPane(paneId) {
   showLoading(el);
 
   switch (paneId) {
-    // ── CLIENT ──────────────────────────────────────────────────────────────
     case 'client-schedule': {
       const data = await fetchCached('clientSchedule', '/api/Client/schedule');
       if (!data) { showErr(el, 'Не удалось загрузить расписание'); return; }
-      // Update stats
       updateClientStats(data, null, null);
       el.innerHTML = buildTable(
         ['Дата','Время','Группа','Направление','Тренер','Статус'],
@@ -131,8 +117,6 @@ async function loadPane(paneId) {
       el.innerHTML = statsHtml + tableHtml;
       break;
     }
-
-    // ── TRAINER ─────────────────────────────────────────────────────────────
     case 'trainer-schedule': {
       const data = await fetchCached('trainerSchedule', '/api/Trainer/schedule');
       if (!data) { showErr(el, 'Не удалось загрузить расписание'); return; }
@@ -149,7 +133,6 @@ async function loadPane(paneId) {
       if (!data) { showErr(el, 'Не удалось загрузить группы'); return; }
       updateTrainerStats(null, data);
       el.innerHTML = buildTrainerGroupsTable(data);
-      // Attach expand buttons
       el.querySelectorAll('.expand-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           const idx      = btn.dataset.idx;
@@ -162,8 +145,6 @@ async function loadPane(paneId) {
       });
       break;
     }
-
-    // ── DIRECTOR ────────────────────────────────────────────────────────────
     case 'dir-occupancy': {
       const data = await fetchCached('dirOccupancy', '/api/Analytics/groups/occupancy');
       if (!data) { showErr(el, 'Ошибка загрузки'); return; }
@@ -199,8 +180,6 @@ async function loadPane(paneId) {
       );
       break;
     }
-
-    // ── ACCOUNTANT ──────────────────────────────────────────────────────────
     case 'acc-summary': {
       const data = await fetchCached('accSummary', '/api/Finance/payments-summary');
       if (!data) { showErr(el, 'Ошибка загрузки'); return; }
@@ -239,8 +218,6 @@ async function loadPane(paneId) {
       );
       break;
     }
-
-    // ── ADMIN ────────────────────────────────────────────────────────────────
     case 'admin-clients': {
       const data = await fetchCached('adminClients', '/api/Clients');
       if (!data) { showErr(el, 'Ошибка загрузки'); return; }
@@ -277,12 +254,10 @@ async function loadPane(paneId) {
       document.getElementById('add-client-btn').style.display = 'none';
       break;
     }
-
     default: break;
   }
 }
 
-// ─── Stats updaters ───────────────────────────────────────────────────────────
 function updateClientStats(schedule, groups, payments) {
   const el = document.getElementById('client-stats');
   const s  = cache.clientSchedule ?? schedule ?? [];
@@ -332,7 +307,6 @@ function updateAdminStats(clients, trainers, groups) {
   ]);
 }
 
-// ─── Trainer groups table (expandable) ───────────────────────────────────────
 function buildTrainerGroupsTable(groups) {
   if (!groups?.length) return `<div class="empty-state"><div class="empty-icon">🌿</div>Нет групп</div>`;
   let rows = '';
@@ -364,7 +338,6 @@ function buildTrainerGroupsTable(groups) {
   </table></div>`;
 }
 
-// ─── Admin clients table (with delete) ───────────────────────────────────────
 function renderClientsTable(el, data) {
   if (!data?.length) {
     el.innerHTML = `<div class="empty-state"><div class="empty-icon">🌿</div>Нет клиентов</div>`;
@@ -381,14 +354,12 @@ function renderClientsTable(el, data) {
       <td><button class="btn btn-danger btn-sm del-client-btn" data-id="${id}">Удалить</button></td>
     </tr>`;
   }).join('');
-
   el.innerHTML = `<div class="table-wrap"><table>
     <thead><tr>
       <th>Фамилия</th><th>Имя</th><th>Возраст</th><th>Телефон</th><th>Email</th><th></th>
     </tr></thead>
     <tbody>${rows}</tbody>
   </table></div>`;
-
   el.querySelectorAll('.del-client-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
       const id = btn.dataset.id;
@@ -405,7 +376,6 @@ function renderClientsTable(el, data) {
   });
 }
 
-// ─── Add client modal ─────────────────────────────────────────────────────────
 const modal      = document.getElementById('add-client-modal');
 const modalError = document.getElementById('modal-error');
 
@@ -422,29 +392,23 @@ document.getElementById('modal-save').addEventListener('click', async () => {
   const age       = document.getElementById('f-age').value;
   const phone     = document.getElementById('f-phone').value.trim();
   const email     = document.getElementById('f-email').value.trim();
-
   modalError.style.display = 'none';
   if (!lastName || !firstName) {
     modalError.textContent = 'Заполните фамилию и имя';
     modalError.style.display = 'block';
     return;
   }
-
   const saveBtn = document.getElementById('modal-save');
   saveBtn.textContent = 'Сохранение…';
   saveBtn.disabled = true;
-
   const { ok, data } = await apiFetch('/api/Clients', {
     method: 'POST',
     body: JSON.stringify({ lastName, firstName, age: age ? parseInt(age) : null, phone, email }),
   });
-
   saveBtn.textContent = 'Сохранить';
   saveBtn.disabled = false;
-
   if (ok) {
     modal.classList.remove('open');
-    // Reload clients
     delete cache.adminClients;
     const pane = document.getElementById('admin-clients');
     delete pane.dataset.loaded;
@@ -462,16 +426,28 @@ function clearModalForm() {
   modalError.style.display = 'none';
 }
 
-// ─── Initial load ─────────────────────────────────────────────────────────────
-// Загружаем первый активный таб
-const firstPanes = {
-  Client:     'client-schedule',
-  Trainer:    'trainer-schedule',
-  Director:   'dir-occupancy',
-  Accountant: 'acc-summary',
-  Admin:      'admin-clients',
-};
-
-if (firstPanes[ROLE]) {
-  loadPane(firstPanes[ROLE]);
+// Initial load
+if (ROLE === 'Trainer') {
+  loadPane('trainer-schedule');
+  loadPane('trainer-groups');
+}
+else if (ROLE === 'Client') {
+  loadPane('client-schedule');
+  loadPane('client-groups');
+  loadPane('client-payments');
+}
+else if (ROLE === 'Director') {
+  loadPane('dir-occupancy');
+  loadPane('dir-popularity');
+  loadPane('dir-workload');
+}
+else if (ROLE === 'Accountant') {
+  loadPane('acc-summary');
+  loadPane('acc-revenue');
+  loadPane('acc-debts');
+}
+else if (ROLE === 'Admin') {
+  loadPane('admin-clients');
+  loadPane('admin-trainers');
+  loadPane('admin-groups');
 }
