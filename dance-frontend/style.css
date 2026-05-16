@@ -154,8 +154,17 @@ h1,h2,h3,h4 { font-family: 'DM Serif Display', serif; font-weight: 400; line-hei
   overflow: hidden; margin-bottom: 20px;
 }
 .card-head {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 16px 22px; border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 22px;
+  border-bottom: 1px solid var(--border);
+  gap: 12px;
+}
+#admin-action-btns {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
 }
 .card-head h3 { font-size: 15px; }
 .card-body { padding: 20px 22px; }
