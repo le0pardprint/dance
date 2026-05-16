@@ -10,10 +10,9 @@
 
 <div class="app">
 
-  <!-- ═══ SIDEBAR ════════════════════════════════════════════════════════════ -->
   <aside class="sidebar">
     <div class="sidebar-logo">
-      <div class="s-title">Школа танцев</div>
+      <div class="s-title">Школа танцев "Ритм"</div>
       <div class="s-sub">CRM система</div>
     </div>
     <div class="sidebar-user">
@@ -25,11 +24,10 @@
     </div>
     <nav class="nav" id="sidebar-nav"></nav>
     <div class="sidebar-footer">
-      <button class="btn-logout" id="logout-btn">← Выйти</button>
+      <button class="btn-logout" id="logout-btn">Выйти</button>
     </div>
   </aside>
 
-  <!-- ═══ MAIN ════════════════════════════════════════════════════════════════ -->
   <div class="main">
     <header class="topbar">
       <h2 id="page-title">Главная</h2>
@@ -39,13 +37,14 @@
 
       <!-- CLIENT -->
       <div class="page" id="page-client">
+        <div id="client-name-banner" class="client-banner"></div>
         <div id="client-stats"></div>
         <div class="card">
           <div class="card-body">
             <div class="tabs">
-              <button class="tab-btn active" data-tab="client-schedule">📅 Расписание</button>
-              <button class="tab-btn" data-tab="client-groups">🏫 Мои группы</button>
-              <button class="tab-btn" data-tab="client-payments">💳 Оплаты</button>
+              <button class="tab-btn active" data-tab="client-schedule">Расписание</button>
+              <button class="tab-btn" data-tab="client-groups">Мои группы</button>
+              <button class="tab-btn" data-tab="client-payments">Оплаты</button>
             </div>
             <div class="tab-pane active" id="client-schedule"></div>
             <div class="tab-pane" id="client-groups"></div>
@@ -60,8 +59,8 @@
         <div class="card">
           <div class="card-body">
             <div class="tabs">
-              <button class="tab-btn active" data-tab="trainer-schedule">📅 Расписание</button>
-              <button class="tab-btn" data-tab="trainer-groups">👥 Мои группы</button>
+              <button class="tab-btn active" data-tab="trainer-schedule">Расписание</button>
+              <button class="tab-btn" data-tab="trainer-groups">Мои группы</button>
             </div>
             <div class="tab-pane active" id="trainer-schedule"></div>
             <div class="tab-pane" id="trainer-groups"></div>
@@ -75,9 +74,9 @@
         <div class="card">
           <div class="card-body">
             <div class="tabs">
-              <button class="tab-btn active" data-tab="dir-occupancy">📊 Заполненность</button>
-              <button class="tab-btn" data-tab="dir-popularity">🎯 Направления</button>
-              <button class="tab-btn" data-tab="dir-workload">🏋 Тренеры</button>
+              <button class="tab-btn active" data-tab="dir-occupancy">Заполненность</button>
+              <button class="tab-btn" data-tab="dir-popularity">Направления</button>
+              <button class="tab-btn" data-tab="dir-workload">Тренеры</button>
             </div>
             <div class="tab-pane active" id="dir-occupancy"></div>
             <div class="tab-pane" id="dir-popularity"></div>
@@ -92,9 +91,9 @@
         <div class="card">
           <div class="card-body">
             <div class="tabs">
-              <button class="tab-btn active" data-tab="acc-summary">📋 Сводка</button>
-              <button class="tab-btn" data-tab="acc-revenue">💰 Выручка</button>
-              <button class="tab-btn" data-tab="acc-debts">⚠️ Долги</button>
+              <button class="tab-btn active" data-tab="acc-summary">Сводка</button>
+              <button class="tab-btn" data-tab="acc-revenue">Выручка</button>
+              <button class="tab-btn" data-tab="acc-debts">Долги</button>
             </div>
             <div class="tab-pane active" id="acc-summary"></div>
             <div class="tab-pane" id="acc-revenue"></div>
@@ -109,13 +108,16 @@
         <div class="card">
           <div class="card-head">
             <h3>База данных</h3>
-            <button class="btn btn-primary btn-sm" id="add-client-btn" style="display:none">+ Клиент</button>
+            <div id="admin-action-btns">
+              <button class="btn btn-primary btn-sm" id="add-client-btn" style="display:none">+ Клиент</button>
+              <button class="btn btn-ghost btn-sm" id="add-user-btn" style="display:none">+ Пользователь</button>
+            </div>
           </div>
           <div class="card-body">
             <div class="tabs">
-              <button class="tab-btn active" data-tab="admin-clients">👥 Клиенты</button>
-              <button class="tab-btn" data-tab="admin-trainers">🎽 Тренеры</button>
-              <button class="tab-btn" data-tab="admin-groups">🏫 Группы</button>
+              <button class="tab-btn active" data-tab="admin-clients">Клиенты</button>
+              <button class="tab-btn" data-tab="admin-trainers">Тренеры</button>
+              <button class="tab-btn" data-tab="admin-groups">Группы</button>
             </div>
             <div class="tab-pane active" id="admin-clients"></div>
             <div class="tab-pane" id="admin-trainers"></div>
@@ -124,11 +126,11 @@
         </div>
       </div>
 
-    </div><!-- /content -->
-  </div><!-- /main -->
-</div><!-- /app -->
+    </div>
+  </div>
+</div>
 
-<!-- ═══ MODAL: добавить клиента ════════════════════════════════════════════ -->
+<!-- MODAL: добавить клиента -->
 <div class="modal-overlay" id="add-client-modal">
   <div class="modal">
     <div class="modal-head"><h3>Новый клиент</h3></div>
@@ -142,11 +144,108 @@
         <div class="field"><label>Возраст</label><input id="f-age" type="number" /></div>
         <div class="field"><label>Телефон</label><input id="f-phone" placeholder="+7..." /></div>
       </div>
-      <div class="field"><label>Email</label><input id="f-email" type="email" placeholder="mail@example.com" /></div>
+      <div class="field"><label>Email</label><input id="f-email" type="email" /></div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" id="modal-cancel">Отмена</button>
       <button class="btn btn-primary" id="modal-save">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: редактировать клиента -->
+<div class="modal-overlay" id="edit-client-modal">
+  <div class="modal">
+    <div class="modal-head"><h3>Редактировать клиента</h3></div>
+    <div class="modal-body">
+      <div id="edit-modal-error" class="error-box" style="display:none"></div>
+      <input type="hidden" id="ef-id" />
+      <div class="form-row">
+        <div class="field"><label>Фамилия *</label><input id="ef-lastName" /></div>
+        <div class="field"><label>Имя *</label><input id="ef-firstName" /></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Возраст</label><input id="ef-age" type="number" /></div>
+        <div class="field"><label>Телефон</label><input id="ef-phone" /></div>
+      </div>
+      <div class="field"><label>Email</label><input id="ef-email" type="email" /></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="edit-modal-cancel">Отмена</button>
+      <button class="btn btn-primary" id="edit-modal-save">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: добавить пользователя -->
+<div class="modal-overlay" id="add-user-modal">
+  <div class="modal">
+    <div class="modal-head"><h3>Новый пользователь</h3></div>
+    <div class="modal-body">
+      <div id="user-modal-error" class="error-box" style="display:none"></div>
+      <div class="field"><label>Email *</label><input id="u-email" type="email" /></div>
+      <div class="field"><label>Пароль *</label><input id="u-password" type="password" /></div>
+      <div class="field">
+        <label>Роль *</label>
+        <select id="u-role">
+          <option value="Client">Клиент</option>
+          <option value="Trainer">Тренер</option>
+          <option value="Admin">Администратор</option>
+          <option value="Director">Директор</option>
+          <option value="Accountant">Бухгалтер</option>
+        </select>
+      </div>
+      <div class="field"><label>Client ID (если клиент)</label><input id="u-clientId" type="number" /></div>
+      <div class="field"><label>Trainer ID (если тренер)</label><input id="u-trainerId" type="number" /></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="user-modal-cancel">Отмена</button>
+      <button class="btn btn-primary" id="user-modal-save">Создать</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: изменить статус занятия (тренер) -->
+<div class="modal-overlay" id="status-modal">
+  <div class="modal">
+    <div class="modal-head"><h3>Изменить статус занятия</h3></div>
+    <div class="modal-body">
+      <input type="hidden" id="sm-class-id" />
+      <div class="field">
+        <label>Статус</label>
+        <select id="sm-status">
+          <option value="Запланировано">Запланировано</option>
+          <option value="Проведено">Проведено</option>
+          <option value="Отменено">Отменено</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="sm-cancel">Отмена</button>
+      <button class="btn btn-primary" id="sm-save">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: изменить долг (бухгалтер) -->
+<div class="modal-overlay" id="debt-modal">
+  <div class="modal">
+    <div class="modal-head"><h3>Изменить статус абонемента</h3></div>
+    <div class="modal-body">
+      <div id="debt-modal-error" class="error-box" style="display:none"></div>
+      <input type="hidden" id="dm-sub-id" />
+      <div class="field">
+        <label>Статус</label>
+        <select id="dm-status">
+          <option value="Активен">Активен</option>
+          <option value="Оплачен">Оплачен</option>
+          <option value="Истёк">Истёк</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="dm-cancel">Отмена</button>
+      <button class="btn btn-primary" id="dm-save">Сохранить</button>
     </div>
   </div>
 </div>

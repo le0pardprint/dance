@@ -267,3 +267,11 @@ tbody tr:last-child td { border-bottom: none; }
   .sidebar { display: none; }
   .stats-grid { grid-template-columns: 1fr 1fr; }
 }
+
+.client-banner { margin-bottom: 16px; }
+.client-hello {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 12px 18px;
+  font-size: 14px; color: var(--ink2);
+}
+.client-hello strong { color: var(--accent); }
