@@ -314,8 +314,6 @@ async function loadPane(paneId) {
           btn.textContent = expanded ? 'Расписание' : 'Скрыть';
         });
       });
-      document.getElementById('add-client-btn').style.display = 'none';
-      document.getElementById('add-user-btn').style.display   = 'none';
       break;
     }
     case 'admin-groups': {
@@ -353,8 +351,6 @@ async function loadPane(paneId) {
           btn.textContent = expanded ? 'Состав' : 'Скрыть';
         });
       });
-      document.getElementById('add-client-btn').style.display = 'none';
-      document.getElementById('add-user-btn').style.display   = 'none';
       break;
     }
 
