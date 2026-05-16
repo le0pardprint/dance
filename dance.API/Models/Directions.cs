@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-
 namespace dance.API.Models
 {
     public class Direction
@@ -10,7 +9,7 @@ namespace dance.API.Models
         public string Description { get; set; }
         public string AgeGroup { get; set; }
         public string Level { get; set; }
-
         public ICollection<Group>? Groups { get; set; }
+        public ICollection<Trainer>? Trainers { get; set; }  // ← добавлено
     }
 }

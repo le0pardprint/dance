@@ -7,7 +7,6 @@ namespace dance.API.Data
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
-        // DbSet для всех моделей
         public DbSet<Client> Clients { get; set; }
         public DbSet<Trainer> Trainers { get; set; }
         public DbSet<Direction> Directions { get; set; }
@@ -20,8 +19,6 @@ namespace dance.API.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // ===== НАСТРОЙКА СВЯЗЕЙ =====
-
             // Связь Client → User (один к одному)
             modelBuilder.Entity<Client>()
                 .HasOne(c => c.User)
@@ -34,6 +31,13 @@ namespace dance.API.Data
                 .HasOne(t => t.User)
                 .WithOne(u => u.Trainer)
                 .HasForeignKey<Trainer>(t => t.User_id)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // ← ФИКС: явная связь Trainer → Direction
+            modelBuilder.Entity<Trainer>()
+                .HasOne(t => t.Direction)
+                .WithMany(d => d.Trainers)
+                .HasForeignKey(t => t.Direction_id)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // Связь Direction → Group (один ко многим)
