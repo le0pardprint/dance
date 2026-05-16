@@ -1,6 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-
 namespace dance.API.Models
 {
     public class Subscription
@@ -9,13 +8,10 @@ namespace dance.API.Models
         public int Sub_id { get; set; }
         public int Client_id { get; set; }
         public int Group_id { get; set; }
-
         [Column(TypeName = "decimal(18,2)")]
         public decimal Amount { get; set; }
         public string Status { get; set; }
-
-        public DateTime CreatedAt { get; set; }  // Дата создания абонемента
-
+        public DateTime? CreatedAt { get; set; } 
         public Client? Client { get; set; }
         public Group? Group { get; set; }
     }

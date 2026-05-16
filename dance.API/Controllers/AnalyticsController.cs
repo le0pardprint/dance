@@ -18,7 +18,7 @@ namespace dance.API.Controllers
         }
 
         // GET: api/analytics/groups/occupancy
-        [HttpGet("groups/occupancy")]
+         [HttpGet("groups/occupancy")]
         public async Task<IActionResult> GetGroupsOccupancy()
         {
             var groups = await _dbContext.Groups
