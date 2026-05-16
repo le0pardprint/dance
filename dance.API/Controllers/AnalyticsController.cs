@@ -61,7 +61,11 @@ namespace dance.API.Controllers
                         .Where(g => g.Direction_id == d.Direction_id)
                         .SelectMany(g => g.Registrations)
                         .Count(),
-                    TrainersCount = _dbContext.Trainers.Count(t => t.Direction_id == d.Direction_id)
+                    TrainersCount = _dbContext.Trainers.Count(t => t.Direction_id == d.Direction_id),
+                    TrainerNames = _dbContext.Trainers
+                        .Where(t => t.Direction_id == d.Direction_id)
+                        .Select(t => t.FirstName + " " + t.LastName)
+                        .ToList()
                 })
                 .OrderByDescending(d => d.StudentsCount)
                 .ToListAsync();
@@ -79,6 +83,10 @@ namespace dance.API.Controllers
                     t.Trainer_id,
                     t.FirstName,
                     t.LastName,
+                    DirectionName = _dbContext.Directions
+                        .Where(d => d.Direction_id == t.Direction_id)
+                        .Select(d => d.Name)
+                        .FirstOrDefault(),
                     GroupsCount = _dbContext.Groups.Count(g => g.Trainer_id == t.Trainer_id),
                     StudentsCount = _dbContext.Groups
                         .Where(g => g.Trainer_id == t.Trainer_id)
