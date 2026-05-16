@@ -773,4 +773,6 @@ if (ROLE === 'Trainer') {
   loadPane('admin-clients');
   loadPane('admin-trainers');
   loadPane('admin-groups');
+  document.getElementById('add-client-btn').style.display = '';
+  document.getElementById('add-user-btn').style.display   = '';
 }
