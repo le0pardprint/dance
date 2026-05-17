@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: dance_db
+    environment:
+      SA_PASSWORD: "Dance@12345!"
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Express"
+    ports:
+      - "1433:1433"
+    volumes:
+      - db_data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD", "/opt/mssql-tools/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "Dance@12345!", "-Q", "SELECT 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./dance.API
+      dockerfile: Dockerfile
+    container_name: dance_backend
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:5052
+      - ConnectionStrings__DefaultConnection=Server=db;Database=DanceDb;User Id=sa;Password=Dance@12345!;TrustServerCertificate=True;
+      - Jwt__Key=YourSuperSecretKeyHereAtLeast32CharactersLong!
+      - Jwt__Issuer=DanceAPI
+      - Jwt__Audience=DanceClient
+    ports:
+      - "5052:5052"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./dance-frontend
+      dockerfile: Dockerfile
+    container_name: dance_frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  db_data:
