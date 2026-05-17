@@ -88,12 +88,14 @@ builder.Services.AddCors(options =>
     {
         policy
             .WithOrigins(
-                "http://localhost:3000",      // React CRA
-                "http://localhost:5173",      // Vite
-                "http://127.0.0.1:5500",      // VS Code Live Server
-                "http://localhost:5500",      // VS Code Live Server (альтернативный)
-                "http://localhost:8080",      // другой вариант
-                "null"                        // открытие файла напрямую (file://)
+                "http://localhost:3000",
+                "http://localhost:5173",
+                "http://127.0.0.1:5500",
+                "http://localhost:5500",
+                "http://localhost:8080",
+                "http://localhost",
+                "http://localhost:80",
+                "null"
             )
             .AllowAnyMethod()
             .AllowAnyHeader()
@@ -102,6 +104,25 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+// ─── Автоматические миграции и seed ───────────────────────────────────────────
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    try
+    {
+        // Применяем миграции автоматически
+        db.Database.Migrate();
+
+        // Seed данных если таблицы пустые
+        await DbSeeder.SeedAsync(db);
+    }
+    catch (Exception ex)
+    {
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Ошибка при инициализации базы данных");
+    }
+}
 
 // Pipeline
 if (app.Environment.IsDevelopment())
@@ -114,10 +135,9 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-
-app.UseCors("AllowFrontend");     // 1. CORS
-app.UseAuthentication();          // 2. Токен
-app.UseAuthorization();           // 3. Права
+app.UseCors("AllowFrontend");
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 
