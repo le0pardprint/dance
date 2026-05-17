@@ -5,13 +5,11 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace dance.API.Migrations
 {
-    /// <inheritdoc />
     public partial class FixAllRelationships : Migration
     {
-        /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            // Безопасное удаление foreign keys (могут не существовать)
+            // Безопасное удаление foreign keys
             migrationBuilder.Sql(@"
                 IF EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Registrations_Clients_Client_id1')
                     ALTER TABLE [Registrations] DROP CONSTRAINT [FK_Registrations_Clients_Client_id1];
@@ -25,15 +23,11 @@ namespace dance.API.Migrations
                     ALTER TABLE [Users] DROP CONSTRAINT [FK_Users_Clients_Client_id1];
                 IF EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Users_Trainers_Trainer_id1')
                     ALTER TABLE [Users] DROP CONSTRAINT [FK_Users_Trainers_Trainer_id1];
+                IF EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Groups_Directions_Direction_id')
+                    ALTER TABLE [Groups] DROP CONSTRAINT [FK_Groups_Directions_Direction_id];
+                IF EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Groups_Trainers_Trainer_id')
+                    ALTER TABLE [Groups] DROP CONSTRAINT [FK_Groups_Trainers_Trainer_id];
             ");
-
-            migrationBuilder.DropForeignKey(
-                name: "FK_Groups_Directions_Direction_id",
-                table: "Groups");
-
-            migrationBuilder.DropForeignKey(
-                name: "FK_Groups_Trainers_Trainer_id",
-                table: "Groups");
 
             // Безопасное удаление индексов
             migrationBuilder.Sql(@"
@@ -67,24 +61,17 @@ namespace dance.API.Migrations
                     ALTER TABLE [Registrations] DROP COLUMN [Group_id1];
             ");
 
-            migrationBuilder.AddColumn<int>(
-                name: "User_id",
-                table: "Trainers",
-                type: "int",
-                nullable: true);
+            // Безопасное добавление колонок
+            migrationBuilder.Sql(@"
+                IF NOT EXISTS (SELECT * FROM sys.columns WHERE name = 'User_id' AND object_id = OBJECT_ID('Trainers'))
+                    ALTER TABLE [Trainers] ADD [User_id] int NULL;
+                IF NOT EXISTS (SELECT * FROM sys.columns WHERE name = 'CreatedAt' AND object_id = OBJECT_ID('Subscriptions'))
+                    ALTER TABLE [Subscriptions] ADD [CreatedAt] datetime2 NULL;
+                IF NOT EXISTS (SELECT * FROM sys.columns WHERE name = 'User_id' AND object_id = OBJECT_ID('Clients'))
+                    ALTER TABLE [Clients] ADD [User_id] int NULL;
+            ");
 
-            migrationBuilder.AddColumn<DateTime>(
-                name: "CreatedAt",
-                table: "Subscriptions",
-                type: "datetime2",
-                nullable: true);
-
-            migrationBuilder.AddColumn<int>(
-                name: "User_id",
-                table: "Clients",
-                type: "int",
-                nullable: true);
-
+            // Безопасное создание индексов
             migrationBuilder.Sql(@"
                 IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Trainers_User_id' AND object_id = OBJECT_ID('Trainers'))
                     CREATE UNIQUE INDEX [IX_Trainers_User_id] ON [Trainers] ([User_id]) WHERE [User_id] IS NOT NULL;
@@ -100,141 +87,71 @@ namespace dance.API.Migrations
                     CREATE UNIQUE INDEX [IX_Clients_User_id] ON [Clients] ([User_id]) WHERE [User_id] IS NOT NULL;
             ");
 
-            migrationBuilder.AddForeignKey(
-                name: "FK_Clients_Users_User_id",
-                table: "Clients",
-                column: "User_id",
-                principalTable: "Users",
-                principalColumn: "User_id",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_Groups_Directions_Direction_id",
-                table: "Groups",
-                column: "Direction_id",
-                principalTable: "Directions",
-                principalColumn: "Direction_id",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_Groups_Trainers_Trainer_id",
-                table: "Groups",
-                column: "Trainer_id",
-                principalTable: "Trainers",
-                principalColumn: "Trainer_id",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_Registrations_Clients_Client_id",
-                table: "Registrations",
-                column: "Client_id",
-                principalTable: "Clients",
-                principalColumn: "Client_id",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_Registrations_Groups_Group_id",
-                table: "Registrations",
-                column: "Group_id",
-                principalTable: "Groups",
-                principalColumn: "Group_id",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_Subscriptions_Clients_Client_id",
-                table: "Subscriptions",
-                column: "Client_id",
-                principalTable: "Clients",
-                principalColumn: "Client_id",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_Subscriptions_Groups_Group_id",
-                table: "Subscriptions",
-                column: "Group_id",
-                principalTable: "Groups",
-                principalColumn: "Group_id",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_Trainers_Users_User_id",
-                table: "Trainers",
-                column: "User_id",
-                principalTable: "Users",
-                principalColumn: "User_id",
-                onDelete: ReferentialAction.Restrict);
+            // Безопасное создание foreign keys
+            migrationBuilder.Sql(@"
+                IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Clients_Users_User_id')
+                    ALTER TABLE [Clients] ADD CONSTRAINT [FK_Clients_Users_User_id] FOREIGN KEY ([User_id]) REFERENCES [Users] ([User_id]) ON DELETE NO ACTION;
+                IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Groups_Directions_Direction_id')
+                    ALTER TABLE [Groups] ADD CONSTRAINT [FK_Groups_Directions_Direction_id] FOREIGN KEY ([Direction_id]) REFERENCES [Directions] ([Direction_id]) ON DELETE NO ACTION;
+                IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Groups_Trainers_Trainer_id')
+                    ALTER TABLE [Groups] ADD CONSTRAINT [FK_Groups_Trainers_Trainer_id] FOREIGN KEY ([Trainer_id]) REFERENCES [Trainers] ([Trainer_id]) ON DELETE NO ACTION;
+                IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Registrations_Clients_Client_id')
+                    ALTER TABLE [Registrations] ADD CONSTRAINT [FK_Registrations_Clients_Client_id] FOREIGN KEY ([Client_id]) REFERENCES [Clients] ([Client_id]) ON DELETE NO ACTION;
+                IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Registrations_Groups_Group_id')
+                    ALTER TABLE [Registrations] ADD CONSTRAINT [FK_Registrations_Groups_Group_id] FOREIGN KEY ([Group_id]) REFERENCES [Groups] ([Group_id]) ON DELETE NO ACTION;
+                IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Subscriptions_Clients_Client_id')
+                    ALTER TABLE [Subscriptions] ADD CONSTRAINT [FK_Subscriptions_Clients_Client_id] FOREIGN KEY ([Client_id]) REFERENCES [Clients] ([Client_id]) ON DELETE NO ACTION;
+                IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Subscriptions_Groups_Group_id')
+                    ALTER TABLE [Subscriptions] ADD CONSTRAINT [FK_Subscriptions_Groups_Group_id] FOREIGN KEY ([Group_id]) REFERENCES [Groups] ([Group_id]) ON DELETE NO ACTION;
+                IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Trainers_Users_User_id')
+                    ALTER TABLE [Trainers] ADD CONSTRAINT [FK_Trainers_Users_User_id] FOREIGN KEY ([User_id]) REFERENCES [Users] ([User_id]) ON DELETE NO ACTION;
+            ");
         }
 
-        /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropForeignKey(
-                name: "FK_Clients_Users_User_id",
-                table: "Clients");
+            migrationBuilder.Sql(@"
+                IF EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Clients_Users_User_id')
+                    ALTER TABLE [Clients] DROP CONSTRAINT [FK_Clients_Users_User_id];
+                IF EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Groups_Directions_Direction_id')
+                    ALTER TABLE [Groups] DROP CONSTRAINT [FK_Groups_Directions_Direction_id];
+                IF EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Groups_Trainers_Trainer_id')
+                    ALTER TABLE [Groups] DROP CONSTRAINT [FK_Groups_Trainers_Trainer_id];
+                IF EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Registrations_Clients_Client_id')
+                    ALTER TABLE [Registrations] DROP CONSTRAINT [FK_Registrations_Clients_Client_id];
+                IF EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Registrations_Groups_Group_id')
+                    ALTER TABLE [Registrations] DROP CONSTRAINT [FK_Registrations_Groups_Group_id];
+                IF EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Subscriptions_Clients_Client_id')
+                    ALTER TABLE [Subscriptions] DROP CONSTRAINT [FK_Subscriptions_Clients_Client_id];
+                IF EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Subscriptions_Groups_Group_id')
+                    ALTER TABLE [Subscriptions] DROP CONSTRAINT [FK_Subscriptions_Groups_Group_id];
+                IF EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Trainers_Users_User_id')
+                    ALTER TABLE [Trainers] DROP CONSTRAINT [FK_Trainers_Users_User_id];
+            ");
 
-            migrationBuilder.DropForeignKey(
-                name: "FK_Groups_Directions_Direction_id",
-                table: "Groups");
+            migrationBuilder.Sql(@"
+                IF EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Trainers_User_id' AND object_id = OBJECT_ID('Trainers'))
+                    DROP INDEX [IX_Trainers_User_id] ON [Trainers];
+                IF EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Subscriptions_Client_id' AND object_id = OBJECT_ID('Subscriptions'))
+                    DROP INDEX [IX_Subscriptions_Client_id] ON [Subscriptions];
+                IF EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Subscriptions_Group_id' AND object_id = OBJECT_ID('Subscriptions'))
+                    DROP INDEX [IX_Subscriptions_Group_id] ON [Subscriptions];
+                IF EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Registrations_Client_id' AND object_id = OBJECT_ID('Registrations'))
+                    DROP INDEX [IX_Registrations_Client_id] ON [Registrations];
+                IF EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Registrations_Group_id' AND object_id = OBJECT_ID('Registrations'))
+                    DROP INDEX [IX_Registrations_Group_id] ON [Registrations];
+                IF EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Clients_User_id' AND object_id = OBJECT_ID('Clients'))
+                    DROP INDEX [IX_Clients_User_id] ON [Clients];
+            ");
 
-            migrationBuilder.DropForeignKey(
-                name: "FK_Groups_Trainers_Trainer_id",
-                table: "Groups");
-
-            migrationBuilder.DropForeignKey(
-                name: "FK_Registrations_Clients_Client_id",
-                table: "Registrations");
-
-            migrationBuilder.DropForeignKey(
-                name: "FK_Registrations_Groups_Group_id",
-                table: "Registrations");
-
-            migrationBuilder.DropForeignKey(
-                name: "FK_Subscriptions_Clients_Client_id",
-                table: "Subscriptions");
-
-            migrationBuilder.DropForeignKey(
-                name: "FK_Subscriptions_Groups_Group_id",
-                table: "Subscriptions");
-
-            migrationBuilder.DropForeignKey(
-                name: "FK_Trainers_Users_User_id",
-                table: "Trainers");
-
-            migrationBuilder.DropIndex(
-                name: "IX_Trainers_User_id",
-                table: "Trainers");
-
-            migrationBuilder.DropIndex(
-                name: "IX_Subscriptions_Client_id",
-                table: "Subscriptions");
-
-            migrationBuilder.DropIndex(
-                name: "IX_Subscriptions_Group_id",
-                table: "Subscriptions");
-
-            migrationBuilder.DropIndex(
-                name: "IX_Registrations_Client_id",
-                table: "Registrations");
-
-            migrationBuilder.DropIndex(
-                name: "IX_Registrations_Group_id",
-                table: "Registrations");
-
-            migrationBuilder.DropIndex(
-                name: "IX_Clients_User_id",
-                table: "Clients");
-
-            migrationBuilder.DropColumn(
-                name: "User_id",
-                table: "Trainers");
-
-            migrationBuilder.DropColumn(
-                name: "CreatedAt",
-                table: "Subscriptions");
-
-            migrationBuilder.DropColumn(
-                name: "User_id",
-                table: "Clients");
+            migrationBuilder.Sql(@"
+                IF EXISTS (SELECT * FROM sys.columns WHERE name = 'User_id' AND object_id = OBJECT_ID('Trainers'))
+                    ALTER TABLE [Trainers] DROP COLUMN [User_id];
+                IF EXISTS (SELECT * FROM sys.columns WHERE name = 'CreatedAt' AND object_id = OBJECT_ID('Subscriptions'))
+                    ALTER TABLE [Subscriptions] DROP COLUMN [CreatedAt];
+                IF EXISTS (SELECT * FROM sys.columns WHERE name = 'User_id' AND object_id = OBJECT_ID('Clients'))
+                    ALTER TABLE [Clients] DROP COLUMN [User_id];
+            ");
         }
     }
 }
