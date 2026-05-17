@@ -269,7 +269,7 @@ async function loadPane(paneId) {
           `${c.lastName} ${c.firstName}`,
           fmtMoney(c.totalPaid), fmtMoney(c.totalAmount),
           `<span style="color:var(--danger);font-weight:600">${fmtMoney(c.debt)}</span>`,
-          `<button class="btn btn-ghost btn-sm edit-debt-btn" data-id="${c.client_id}">Изменить</button>`
+          `<button class="btn btn-ghost btn-sm edit-debt-btn" data-id="${c.client_id ?? c.clientId}">Изменить</button>`
         ]),
         'Задолженностей нет'
       );
