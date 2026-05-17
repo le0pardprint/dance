@@ -115,7 +115,7 @@ using (var scope = app.Services.CreateScope())
         db.Database.Migrate();
 
         // Seed данных если таблицы пустые
-        await DbSeeder.SeedAsync(db);
+        await dance.API.Data.DbSeeder.SeedAsync(db);
     }
     catch (Exception ex)
     {
