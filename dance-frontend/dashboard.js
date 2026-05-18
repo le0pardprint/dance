@@ -223,26 +223,46 @@ async function loadPane(paneId) {
     }
 
     // ACCOUNTANT
-    case 'acc-summary': {
-      const data = await fetchCached('accSummary', '/api/Finance/payments-summary');
-      if (!data) { showErr(el, 'Ошибка загрузки'); return; }
-      updateAccStats(null, data);
-      const paid   = data.details?.filter(s => s.status === 'Оплачен')  ?? [];
-      const active = data.details?.filter(s => s.status === 'Активен')  ?? [];
-      const other  = data.details?.filter(s => s.status !== 'Оплачен' && s.status !== 'Активен') ?? [];
-      el.innerHTML = `
-        <h4 style="margin-bottom:12px;font-size:14px;color:var(--muted)">Оплаченные</h4>
-        ${buildTable(['Клиент','Группа','Сумма','Статус'],
-          paid.map(s => [s.clientName, s.groupName, fmtMoney(s.amount), badge(s.status)]), 'Нет')}
-        <h4 style="margin:16px 0 12px;font-size:14px;color:var(--muted)">Активные</h4>
-        ${buildTable(['Клиент','Группа','Сумма','Статус'],
-          active.map(s => [s.clientName, s.groupName, fmtMoney(s.amount), badge(s.status)]), 'Нет')}
-        ${other.length ? `<h4 style="margin:16px 0 12px;font-size:14px;color:var(--muted)">Прочие</h4>
-        ${buildTable(['Клиент','Группа','Сумма','Статус'],
-          other.map(s => [s.clientName, s.groupName, fmtMoney(s.amount), badge(s.status)]), 'Нет')}` : ''}
-      `;
-      break;
-    }
+  case 'acc-summary': {
+  const data = await fetchCached('accSummary', '/api/Finance/payments-summary');
+  const clients = await fetchCached('adminClients', '/api/Clients');
+  if (!data) { showErr(el, 'Ошибка загрузки'); return; }
+  updateAccStats(null, data);
+
+  const paid   = data.details?.filter(s => s.status === 'Оплачен')  ?? [];
+  const active = data.details?.filter(s => s.status === 'Активен')  ?? [];
+  const other  = data.details?.filter(s => s.status !== 'Оплачен' && s.status !== 'Активен') ?? [];
+
+  // Клиенты без абонементов
+  const clientsWithSubs = new Set(data.details?.map(s => s.clientName) ?? []);
+  const noSubs = (clients ?? []).filter(c =>
+    !clientsWithSubs.has(`${c.lastName} ${c.firstName}`)
+  );
+
+  el.innerHTML = `
+    <h4 style="margin-bottom:12px;font-size:14px;color:var(--muted)">Оплаченные</h4>
+    ${buildTable(['Client ID','Клиент','Группа','Сумма','Статус'],
+      paid.map(s => [s.client_id ?? '—', s.clientName, s.groupName, fmtMoney(s.amount), badge(s.status)]), 'Нет')}
+    <h4 style="margin:16px 0 12px;font-size:14px;color:var(--muted)">Активные</h4>
+    ${buildTable(['Client ID','Клиент','Группа','Сумма','Статус'],
+      active.map(s => [s.client_id ?? '—', s.clientName, s.groupName, fmtMoney(s.amount), badge(s.status)]), 'Нет')}
+    ${other.length ? `<h4 style="margin:16px 0 12px;font-size:14px;color:var(--muted)">Прочие</h4>
+    ${buildTable(['Client ID','Клиент','Группа','Сумма','Статус'],
+      other.map(s => [s.client_id ?? '—', s.clientName, s.groupName, fmtMoney(s.amount), badge(s.status)]), 'Нет')}` : ''}
+    ${noSubs.length ? `<h4 style="margin:16px 0 12px;font-size:14px;color:var(--muted)">Без абонементов</h4>
+    ${buildTable(['Client ID','Клиент','Email',''],
+      noSubs.map(c => [c.client_id ?? '—', `${c.lastName} ${c.firstName}`, c.email ?? '—',
+        `<button class="btn btn-ghost btn-sm add-sub-btn" data-id="${c.client_id}">+ Абонемент</button>`
+      ]), 'Нет')}` : ''}
+  `;
+  el.querySelectorAll('.add-sub-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.getElementById('ad-clientId').value = btn.dataset.id;
+      document.getElementById('add-debt-modal').classList.add('open');
+    });
+  });
+  break;
+}
     case 'acc-revenue': {
       const data = await fetchCached('accRevenue', '/api/Finance/revenue');
       if (!data) { showErr(el, 'Ошибка загрузки'); return; }
@@ -498,7 +518,7 @@ function buildAdminTrainersTable(data) {
       <td>${t.direction?.name ?? '—'}</td>
       <td>${t.phone ?? '—'}</td>
       <td style="color:var(--muted)">${t.email ?? '—'}</td>
-      <td style="color:var(--muted);font-size:12px">ID: ${userId}</td>
+      <td style="color:var(--muted);font-size:12px">Trainer ID: ${t.trainer_id ?? t.trainerId ?? '—'} | User ID: ${userId}</td>
       <td><button class="btn btn-ghost btn-sm expand-trainer-btn" data-idx="${i}" data-expanded="0">Расписание</button></td>
     </tr>`;
     if (t.classes?.length) {
@@ -512,7 +532,7 @@ function buildAdminTrainersTable(data) {
     }
   });
   return `<div class="table-wrap"><table>
-    <thead><tr><th>Фамилия</th><th>Имя</th><th>Направление</th><th>Телефон</th><th>Email</th><th>User ID</th><th></th></tr></thead>
+    <thead><tr><th>Фамилия</th><th>Имя</th><th>Направление</th><th>Телефон</th><th>Email</th><th>IDs</th><th></th></tr></thead>
     <tbody>${rows}</tbody>
   </table></div>`;
 }
@@ -567,7 +587,7 @@ function renderClientsTable(el, data) {
   }).join('');
 
   el.innerHTML = `<div class="table-wrap"><table>
-    <thead><tr><th>Фамилия</th><th>Имя</th><th>Возраст</th><th>Телефон</th><th>Email</th><th>User ID</th><th></th></tr></thead>
+    <thead><tr><th>Фамилия</th><th>Имя</th><th>Возраст</th><th>Телефон</th><th>Email</th><th>IDs</th><th></th></tr></thead>
     <tbody>${rows}</tbody>
   </table></div>`;
 
