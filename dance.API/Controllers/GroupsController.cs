@@ -11,7 +11,6 @@ namespace dance.API.Controllers
     {
         private readonly AppDbContext _dbContext;
 
-        // Конструктор получает доступ к базе данных
         public GroupsController(AppDbContext context)
         {
             _dbContext = context;
@@ -21,12 +20,10 @@ namespace dance.API.Controllers
         [HttpGet]
         public async Task<ActionResult<List<Group>>> GetAll()
         {
-            // Берём группы из базы данных (с подгрузкой направлений и тренеров)
             var groups = await _dbContext.Groups
                 .Include(g => g.Direction)
                 .Include(g => g.Trainer)
                 .ToListAsync();
-
             return Ok(groups);
         }
 
@@ -49,10 +46,23 @@ namespace dance.API.Controllers
         [HttpPost]
         public async Task<ActionResult<Group>> Create(Group group)
         {
+            var direction = await _dbContext.Directions.FindAsync(group.Direction_id);
+            if (direction == null)
+                return BadRequest(new { message = "Направление не найдено" });
+
+            var trainer = await _dbContext.Trainers.FindAsync(group.Trainer_id);
+            if (trainer == null)
+                return BadRequest(new { message = "Тренер не найден" });
+
             _dbContext.Groups.Add(group);
             await _dbContext.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetById), new { id = group.Group_id }, group);
+            var created = await _dbContext.Groups
+                .Include(g => g.Direction)
+                .Include(g => g.Trainer)
+                .FirstOrDefaultAsync(g => g.Group_id == group.Group_id);
+
+            return CreatedAtAction(nameof(GetById), new { id = group.Group_id }, created);
         }
 
         // PUT: api/groups/{id}
@@ -60,12 +70,33 @@ namespace dance.API.Controllers
         public async Task<IActionResult> Update(int id, Group group)
         {
             if (id != group.Group_id)
-                return BadRequest();
+                return BadRequest(new { message = "ID не совпадает" });
 
-            _dbContext.Entry(group).State = EntityState.Modified;
+            var existing = await _dbContext.Groups.FindAsync(id);
+            if (existing == null)
+                return NotFound(new { message = "Группа не найдена" });
+
+            existing.Name = group.Name;
+            existing.Direction_id = group.Direction_id;
+            existing.Trainer_id = group.Trainer_id;
+            existing.Status = group.Status;
+
+            await _dbContext.SaveChangesAsync();
+            return Ok(existing);
+        }
+
+        // PATCH: api/groups/{id}/status
+        [HttpPatch("{id}/status")]
+        public async Task<IActionResult> UpdateStatus(int id, [FromBody] GroupStatusDto dto)
+        {
+            var group = await _dbContext.Groups.FindAsync(id);
+            if (group == null)
+                return NotFound(new { message = "Группа не найдена" });
+
+            group.Status = dto.Status;
             await _dbContext.SaveChangesAsync();
 
-            return NoContent();
+            return Ok(new { message = "Статус обновлён" });
         }
 
         // DELETE: api/groups/{id}
@@ -74,12 +105,16 @@ namespace dance.API.Controllers
         {
             var group = await _dbContext.Groups.FindAsync(id);
             if (group == null)
-                return NotFound();
+                return NotFound(new { message = "Группа не найдена" });
 
             _dbContext.Groups.Remove(group);
             await _dbContext.SaveChangesAsync();
-
-            return NoContent();
+            return Ok(new { message = "Группа удалена" });
         }
+    }
+
+    public class GroupStatusDto
+    {
+        public string Status { get; set; } = "";
     }
 }
