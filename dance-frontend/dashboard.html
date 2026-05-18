@@ -111,6 +111,7 @@
             <div id="admin-action-btns">
               <button class="btn btn-primary btn-sm" id="add-client-btn">+ Клиент</button>
               <button class="btn btn-ghost btn-sm" id="add-user-btn">+ Пользователь</button>
+              <button class="btn btn-ghost btn-sm" id="add-group-btn" style="display:none">+ Группа</button>
             </div>
           </div>
           <div class="card-body">
@@ -249,7 +250,52 @@
     </div>
   </div>
 </div>
+<!-- MODAL: добавить группу -->
+<div class="modal-overlay" id="add-group-modal">
+  <div class="modal">
+    <div class="modal-head"><h3>Новая группа</h3></div>
+    <div class="modal-body">
+      <div id="add-group-modal-error" class="error-box" style="display:none"></div>
+      <div class="field"><label>Название *</label><input id="ag-name" /></div>
+      <div class="field"><label>Направление *</label><select id="ag-direction"></select></div>
+      <div class="field"><label>Тренер *</label><select id="ag-trainer"></select></div>
+      <div class="field">
+        <label>Статус</label>
+        <select id="ag-status">
+          <option value="Активна">Активна</option>
+          <option value="Приостановлена">Приостановлена</option>
+          <option value="Закрыта">Закрыта</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="add-group-modal-cancel">Отмена</button>
+      <button class="btn btn-primary" id="add-group-modal-save">Сохранить</button>
+    </div>
+  </div>
+</div>
 
+<!-- MODAL: изменить статус группы -->
+<div class="modal-overlay" id="group-status-modal">
+  <div class="modal">
+    <div class="modal-head"><h3>Изменить статус группы</h3></div>
+    <div class="modal-body">
+      <input type="hidden" id="gs-group-id" />
+      <div class="field">
+        <label>Статус</label>
+        <select id="gs-status">
+          <option value="Активна">Активна</option>
+          <option value="Приостановлена">Приостановлена</option>
+          <option value="Закрыта">Закрыта</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="gs-cancel">Отмена</button>
+      <button class="btn btn-primary" id="gs-save">Сохранить</button>
+    </div>
+  </div>
+</div>
 <script src="api.js"></script>
 <script src="dashboard.js"></script>
 </body>

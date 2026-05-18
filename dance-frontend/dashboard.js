@@ -20,7 +20,6 @@ document.getElementById('sb-email').textContent   = EMAIL ?? '—';
 document.getElementById('sb-role').textContent    = ROLE_LABELS[ROLE] ?? ROLE;
 document.getElementById('sb-avatar').textContent  = EMAIL ? EMAIL[0].toUpperCase() : '?';
 
-const navIcons = { Client:'', Trainer:'', Director:'', Accountant:'', Admin:'' };
 const navEl = document.getElementById('sidebar-nav');
 const navItem = document.createElement('div');
 navItem.className = 'nav-item active';
@@ -48,12 +47,13 @@ document.querySelectorAll('.tabs').forEach(tabsEl => {
       if (pane) {
         pane.classList.add('active');
         if (!pane.dataset.loaded) loadPane(paneId);
-        // Показываем/скрываем кнопки для Admin
         if (ROLE === 'Admin') {
-          const addClientBtn = document.getElementById('add-client-btn');
-          const addUserBtn   = document.getElementById('add-user-btn');
+          const addClientBtn  = document.getElementById('add-client-btn');
+          const addUserBtn    = document.getElementById('add-user-btn');
+          const addGroupBtn   = document.getElementById('add-group-btn');
           if (addClientBtn) addClientBtn.style.display = paneId === 'admin-clients' ? '' : 'none';
           if (addUserBtn)   addUserBtn.style.display   = paneId === 'admin-clients' ? '' : 'none';
+          if (addGroupBtn)  addGroupBtn.style.display  = paneId === 'admin-groups'  ? '' : 'none';
         }
       }
     });
@@ -79,34 +79,34 @@ async function loadPane(paneId) {
   switch (paneId) {
 
     // CLIENT
-    case 'client-schedule': {
-      const data = await fetchCached('clientSchedule', '/api/Client/schedule');
-      if (!data) { showErr(el, 'Не удалось загрузить расписание'); return; }
-      updateClientStats(data, null, null);
-      // Показываем имя клиента
-      const banner = document.getElementById('client-name-banner');
-      if (banner) banner.innerHTML = `<div class="client-hello">Добро пожаловать, <strong>${EMAIL}</strong></div>`;
-      el.innerHTML = buildTable(
-        ['Дата','Время','Группа','Направление','Тренер','Статус',''],
-        data.map(c => [
-          fmtDate(c.date), c.time??'—', c.groupName??'—',
-          c.directionName??'—', c.trainerName??'—', badge(c.status),
-          c.status === 'Запланировано'
-            ? `<button class="btn btn-danger btn-sm cancel-class-btn" data-id="${c.class_id}">Отменить</button>`
-            : '—'
-        ]),
-        'Расписание пусто'
-      );
-      // Привязываем кнопки отмены
-      el.querySelectorAll('.cancel-class-btn').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          if (!confirm('Отменить запись на это занятие?')) return;
-          // Находим registration_id для этого занятия
-          alert('Функция отмены записи: обратитесь к администратору');
-        });
-      });
-      break;
-    }
+        case 'client-schedule': {
+            const profile = await fetchCached('clientProfile', '/api/Client/profile');
+            const banner = document.getElementById('client-name-banner');
+            if (banner && profile) {
+              banner.innerHTML = `<div class="client-hello">Добро пожаловать, <strong>${profile.firstName} ${profile.lastName}</strong></div>`;
+            }
+            const data = await fetchCached('clientSchedule', '/api/Client/schedule');
+            if (!data) { showErr(el, 'Не удалось загрузить расписание'); return; }
+            updateClientStats(data, null, null);
+            el.innerHTML = buildTable(
+              ['Дата','Время','Группа','Направление','Тренер','Статус',''],
+              data.map(c => [
+                fmtDate(c.date), c.time??'—', c.groupName??'—',
+                c.directionName??'—', c.trainerName??'—', badge(c.status),
+                c.status === 'Запланировано'
+                  ? `<button class="btn btn-danger btn-sm cancel-class-btn" data-id="${c.class_id}">Отменить</button>`
+                  : '—'
+              ]),
+              'Расписание пусто'
+            );
+            el.querySelectorAll('.cancel-class-btn').forEach(btn => {
+              btn.addEventListener('click', async () => {
+                if (!confirm('Отменить запись на это занятие?')) return;
+                alert('Функция отмены записи: обратитесь к администратору');
+              });
+            });
+            break;
+          }
     case 'client-groups': {
       const data = await fetchCached('clientGroups', '/api/Client/my-groups');
       if (!data) { showErr(el, 'Не удалось загрузить группы'); return; }
@@ -229,20 +229,16 @@ async function loadPane(paneId) {
       const data = await fetchCached('accSummary', '/api/Finance/payments-summary');
       if (!data) { showErr(el, 'Ошибка загрузки'); return; }
       updateAccStats(null, data);
-      // Показываем оплаченные и активные отдельно
       const paid   = data.summary?.filter(s => s.status === 'Оплачен')   ?? [];
       const active = data.summary?.filter(s => s.status === 'Активен')   ?? [];
       const other  = data.summary?.filter(s => s.status !== 'Оплачен' && s.status !== 'Активен') ?? [];
       el.innerHTML = `
         <h4 style="margin-bottom:12px;font-size:14px;color:var(--muted)">Оплаченные</h4>
-        ${buildTable(['Статус','Количество','Сумма'],
-          paid.map(s => [badge(s.status), s.count, fmtMoney(s.totalAmount)]), 'Нет')}
+        ${buildTable(['Статус','Количество','Сумма'], paid.map(s => [badge(s.status), s.count, fmtMoney(s.totalAmount)]), 'Нет')}
         <h4 style="margin:16px 0 12px;font-size:14px;color:var(--muted)">Активные</h4>
-        ${buildTable(['Статус','Количество','Сумма'],
-          active.map(s => [badge(s.status), s.count, fmtMoney(s.totalAmount)]), 'Нет')}
+        ${buildTable(['Статус','Количество','Сумма'], active.map(s => [badge(s.status), s.count, fmtMoney(s.totalAmount)]), 'Нет')}
         ${other.length ? `<h4 style="margin:16px 0 12px;font-size:14px;color:var(--muted)">Прочие</h4>
-        ${buildTable(['Статус','Количество','Сумма'],
-          other.map(s => [badge(s.status), s.count, fmtMoney(s.totalAmount)]), 'Нет')}` : ''}
+        ${buildTable(['Статус','Количество','Сумма'], other.map(s => [badge(s.status), s.count, fmtMoney(s.totalAmount)]), 'Нет')}` : ''}
       `;
       break;
     }
@@ -276,13 +272,12 @@ async function loadPane(paneId) {
       el.querySelectorAll('.edit-debt-btn').forEach(btn => {
         btn.addEventListener('click', async () => {
           const clientId = btn.dataset.id;
-          // Загружаем абонементы клиента
           const { ok, data: subs } = await apiFetch(`/api/Subscriptions/byclient/${clientId}`);
           if (!ok || !subs?.length) { alert('Нет абонементов'); return; }
-          // Показываем первый абонемент для редактирования
-          const sub = subs[0];
-          document.getElementById('dm-sub-id').value  = sub.sub_id ?? sub.subId;
-          document.getElementById('dm-status').value  = sub.status;
+          const sub = subs.find(s => s.status === 'Активен') ?? subs[0];
+          const subId = sub.sub_id ?? sub.subId;
+          document.getElementById('dm-sub-id').value = subId;
+          document.getElementById('dm-status').value = sub.status ?? 'Активен';
           document.getElementById('debt-modal').classList.add('open');
         });
       });
@@ -297,6 +292,8 @@ async function loadPane(paneId) {
       renderClientsTable(el, data);
       document.getElementById('add-client-btn').style.display = '';
       document.getElementById('add-user-btn').style.display   = '';
+      const addGroupBtn = document.getElementById('add-group-btn');
+      if (addGroupBtn) addGroupBtn.style.display = 'none';
       break;
     }
     case 'admin-trainers': {
@@ -314,6 +311,10 @@ async function loadPane(paneId) {
           btn.textContent = expanded ? 'Расписание' : 'Скрыть';
         });
       });
+      document.getElementById('add-client-btn').style.display = 'none';
+      document.getElementById('add-user-btn').style.display   = 'none';
+      const addGroupBtn2 = document.getElementById('add-group-btn');
+      if (addGroupBtn2) addGroupBtn2.style.display = 'none';
       break;
     }
     case 'admin-groups': {
@@ -328,10 +329,8 @@ async function loadPane(paneId) {
           const subRows  = el.querySelectorAll(`.group-members-${idx}`);
           const expanded = btn.dataset.expanded === '1';
           if (!expanded && subRows.length === 0) {
-            // Загружаем участников группы
             const { ok, data: regs } = await apiFetch(`/api/Registration/bygroup/${groupId}`);
             if (ok && regs?.length) {
-              const tbody = btn.closest('tr').parentElement;
               regs.forEach(r => {
                 const row = document.createElement('tr');
                 row.className = `sub-row group-members-${idx}`;
@@ -340,7 +339,7 @@ async function loadPane(paneId) {
                     ${r.client?.lastName ?? ''} ${r.client?.firstName ?? ''}
                   </td>
                   <td style="color:var(--muted)">${r.client?.phone ?? '—'}</td>
-                  <td colspan="2"></td>`;
+                  <td colspan="3"></td>`;
                 btn.closest('tr').after(row);
               });
             }
@@ -351,6 +350,17 @@ async function loadPane(paneId) {
           btn.textContent = expanded ? 'Состав' : 'Скрыть';
         });
       });
+      el.querySelectorAll('.change-group-status-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.getElementById('gs-group-id').value = btn.dataset.id;
+          document.getElementById('gs-status').value   = btn.dataset.status;
+          document.getElementById('group-status-modal').classList.add('open');
+        });
+      });
+      document.getElementById('add-client-btn').style.display = 'none';
+      document.getElementById('add-user-btn').style.display   = 'none';
+      const addGroupBtn3 = document.getElementById('add-group-btn');
+      if (addGroupBtn3) addGroupBtn3.style.display = '';
       break;
     }
 
@@ -447,7 +457,6 @@ function buildDirectorPopularityTable(data) {
       <td>${d.trainersCount}</td>
       <td><button class="btn btn-ghost btn-sm expand-trainers-btn" data-idx="${i}" data-id="${d.direction_id}" data-expanded="0">Тренеры</button></td>
     </tr>`;
-    // Список тренеров
     if (d.trainerNames?.length) {
       d.trainerNames.forEach(name => {
         rows += `<tr class="sub-row trainer-rows-${i}" style="display:none">
@@ -467,27 +476,29 @@ function buildAdminTrainersTable(data) {
   if (!data?.length) return `<div class="empty-state">Нет тренеров</div>`;
   let rows = '';
   data.forEach((t, i) => {
+    const userId = t.user_id ?? t.userId ?? t.user?.user_id ?? '—';
+    const userEmail = t.user?.email ?? '—';
     rows += `<tr>
       <td>${t.lastName}</td>
       <td>${t.firstName}</td>
       <td>${t.direction?.name ?? '—'}</td>
       <td>${t.phone ?? '—'}</td>
       <td style="color:var(--muted)">${t.email ?? '—'}</td>
+      <td style="color:var(--muted);font-size:12px">ID: ${userId}</td>
       <td><button class="btn btn-ghost btn-sm expand-trainer-btn" data-idx="${i}" data-expanded="0">Расписание</button></td>
     </tr>`;
-    // Занятия тренера
     if (t.classes?.length) {
       t.classes.slice(0,5).forEach(c => {
         rows += `<tr class="sub-row trainer-detail-${i}" style="display:none">
           <td colspan="2" style="padding-left:32px;font-size:12px">${fmtDate(c.date)} ${c.time ?? ''}</td>
           <td style="font-size:12px;color:var(--muted)">${c.status ?? '—'}</td>
-          <td colspan="3"></td>
+          <td colspan="4"></td>
         </tr>`;
       });
     }
   });
   return `<div class="table-wrap"><table>
-    <thead><tr><th>Фамилия</th><th>Имя</th><th>Направление</th><th>Телефон</th><th>Email</th><th></th></tr></thead>
+    <thead><tr><th>Фамилия</th><th>Имя</th><th>Направление</th><th>Телефон</th><th>Email</th><th>User ID</th><th></th></tr></thead>
     <tbody>${rows}</tbody>
   </table></div>`;
 }
@@ -502,7 +513,10 @@ function buildAdminGroupsTable(data) {
       <td>${g.direction?.name ?? '—'}</td>
       <td>${g.trainer ? `${g.trainer.firstName} ${g.trainer.lastName}` : '—'}</td>
       <td>${badge(g.status)}</td>
-      <td><button class="btn btn-ghost btn-sm expand-group-btn" data-idx="${i}" data-id="${gid}" data-expanded="0">Состав</button></td>
+      <td>
+        <button class="btn btn-ghost btn-sm change-group-status-btn" data-id="${gid}" data-status="${g.status}">Статус</button>
+        <button class="btn btn-ghost btn-sm expand-group-btn" data-idx="${i}" data-id="${gid}" data-expanded="0">Состав</button>
+      </td>
     </tr>`;
   });
   return `<div class="table-wrap"><table>
@@ -518,12 +532,14 @@ function renderClientsTable(el, data) {
   }
   const rows = data.map(c => {
     const id = c.client_id ?? c.clientId ?? '';
+    const userId = c.user_id ?? c.userId ?? '—';
     return `<tr>
       <td>${c.lastName ?? '—'}</td>
       <td>${c.firstName ?? '—'}</td>
       <td>${c.age ?? '—'}</td>
       <td>${c.phone ?? '—'}</td>
       <td style="color:var(--muted)">${c.email ?? '—'}</td>
+      <td style="color:var(--muted);font-size:12px">User ID: ${userId}</td>
       <td>
         <button class="btn btn-ghost btn-sm edit-client-btn" data-id="${id}"
           data-ln="${c.lastName??''}" data-fn="${c.firstName??''}"
@@ -536,7 +552,7 @@ function renderClientsTable(el, data) {
   }).join('');
 
   el.innerHTML = `<div class="table-wrap"><table>
-    <thead><tr><th>Фамилия</th><th>Имя</th><th>Возраст</th><th>Телефон</th><th>Email</th><th></th></tr></thead>
+    <thead><tr><th>Фамилия</th><th>Имя</th><th>Возраст</th><th>Телефон</th><th>Email</th><th>User ID</th><th></th></tr></thead>
     <tbody>${rows}</tbody>
   </table></div>`;
 
@@ -555,14 +571,14 @@ function renderClientsTable(el, data) {
   el.querySelectorAll('.del-client-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
       const id = btn.dataset.id;
-      if (!confirm('Удалить клиента?')) return;
+      if (!confirm('Удалить клиента? Все связанные данные (регистрации, абонементы, посещения) будут удалены.')) return;
       const { ok } = await apiFetch(`/api/Clients/${id}`, { method: 'DELETE' });
       if (ok) {
         cache.adminClients = cache.adminClients?.filter(c => String(c.client_id ?? c.clientId) !== String(id));
         renderClientsTable(el, cache.adminClients);
         updateAdminStats(cache.adminClients, null, null);
       } else {
-        alert('Нельзя удалить — есть связанные данные');
+        alert('Ошибка при удалении клиента');
       }
     });
   });
@@ -696,6 +712,59 @@ document.getElementById('user-modal-save').addEventListener('click', async () =>
   }
 });
 
+// Modal: добавить группу
+const addGroupModal      = document.getElementById('add-group-modal');
+const addGroupModalError = document.getElementById('add-group-modal-error');
+
+if (addGroupModal) {
+  document.getElementById('add-group-btn')?.addEventListener('click', async () => {
+    addGroupModalError.style.display = 'none';
+    // Загружаем направления и тренеров для селектов
+    const dirs = await fetchCached('adminDirections', '/api/Directions');
+    const trns = await fetchCached('adminTrainers', '/api/Trainers');
+    const dirSelect = document.getElementById('ag-direction');
+    const trnSelect = document.getElementById('ag-trainer');
+    if (dirs && dirSelect) {
+      dirSelect.innerHTML = dirs.map(d => `<option value="${d.direction_id ?? d.directionId}">${d.name}</option>`).join('');
+    }
+    if (trns && trnSelect) {
+      trnSelect.innerHTML = trns.map(t => `<option value="${t.trainer_id ?? t.trainerId}">${t.lastName} ${t.firstName}</option>`).join('');
+    }
+    addGroupModal.classList.add('open');
+  });
+  document.getElementById('add-group-modal-cancel')?.addEventListener('click', () => addGroupModal.classList.remove('open'));
+  addGroupModal.addEventListener('click', e => { if (e.target === addGroupModal) addGroupModal.classList.remove('open'); });
+
+  document.getElementById('add-group-modal-save')?.addEventListener('click', async () => {
+    const name        = document.getElementById('ag-name').value.trim();
+    const directionId = document.getElementById('ag-direction').value;
+    const trainerId   = document.getElementById('ag-trainer').value;
+    const status      = document.getElementById('ag-status').value;
+    addGroupModalError.style.display = 'none';
+    if (!name) {
+      addGroupModalError.textContent = 'Введите название группы';
+      addGroupModalError.style.display = 'block'; return;
+    }
+    const saveBtn = document.getElementById('add-group-modal-save');
+    saveBtn.textContent = 'Сохранение…'; saveBtn.disabled = true;
+    const { ok, data } = await apiFetch('/api/Groups', {
+      method: 'POST',
+      body: JSON.stringify({ name, direction_id: parseInt(directionId), trainer_id: parseInt(trainerId), status }),
+    });
+    saveBtn.textContent = 'Сохранить'; saveBtn.disabled = false;
+    if (ok) {
+      addGroupModal.classList.remove('open');
+      delete cache.adminGroups;
+      const pane = document.getElementById('admin-groups');
+      delete pane.dataset.loaded;
+      loadPane('admin-groups');
+    } else {
+      addGroupModalError.textContent = getField(data, 'message') ?? 'Ошибка сохранения';
+      addGroupModalError.style.display = 'block';
+    }
+  });
+}
+
 // Modal: изменить статус занятия
 const statusModal = document.getElementById('status-modal');
 document.getElementById('sm-cancel').addEventListener('click', () => statusModal.classList.remove('open'));
@@ -706,9 +775,9 @@ document.getElementById('sm-save').addEventListener('click', async () => {
   const status  = document.getElementById('sm-status').value;
   const saveBtn = document.getElementById('sm-save');
   saveBtn.textContent = 'Сохранение…'; saveBtn.disabled = true;
-  const { ok } = await apiFetch(`/api/classes/${classId}`, {
-    method: 'PUT',
-    body: JSON.stringify({ class_id: parseInt(classId), status }),
+  const { ok } = await apiFetch(`/api/classes/${classId}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status }),
   });
   saveBtn.textContent = 'Сохранить'; saveBtn.disabled = false;
   if (ok) {
@@ -722,6 +791,34 @@ document.getElementById('sm-save').addEventListener('click', async () => {
   }
 });
 
+// Modal: изменить статус группы
+const groupStatusModal = document.getElementById('group-status-modal');
+if (groupStatusModal) {
+  document.getElementById('gs-cancel')?.addEventListener('click', () => groupStatusModal.classList.remove('open'));
+  groupStatusModal.addEventListener('click', e => { if (e.target === groupStatusModal) groupStatusModal.classList.remove('open'); });
+
+  document.getElementById('gs-save')?.addEventListener('click', async () => {
+    const groupId = document.getElementById('gs-group-id').value;
+    const status  = document.getElementById('gs-status').value;
+    const saveBtn = document.getElementById('gs-save');
+    saveBtn.textContent = 'Сохранение…'; saveBtn.disabled = true;
+    const { ok } = await apiFetch(`/api/Groups/${groupId}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    });
+    saveBtn.textContent = 'Сохранить'; saveBtn.disabled = false;
+    if (ok) {
+      groupStatusModal.classList.remove('open');
+      delete cache.adminGroups;
+      const pane = document.getElementById('admin-groups');
+      delete pane.dataset.loaded;
+      loadPane('admin-groups');
+    } else {
+      alert('Ошибка изменения статуса');
+    }
+  });
+}
+
 // Modal: изменить долг
 const debtModal = document.getElementById('debt-modal');
 document.getElementById('dm-cancel').addEventListener('click', () => debtModal.classList.remove('open'));
@@ -732,9 +829,9 @@ document.getElementById('dm-save').addEventListener('click', async () => {
   const status = document.getElementById('dm-status').value;
   const saveBtn = document.getElementById('dm-save');
   saveBtn.textContent = 'Сохранение…'; saveBtn.disabled = true;
-  const { ok } = await apiFetch(`/api/Subscriptions/${subId}`, {
-    method: 'PUT',
-    body: JSON.stringify({ sub_id: parseInt(subId), status }),
+  const { ok } = await apiFetch(`/api/Subscriptions/${subId}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status }),
   });
   saveBtn.textContent = 'Сохранить'; saveBtn.disabled = false;
   if (ok) {
