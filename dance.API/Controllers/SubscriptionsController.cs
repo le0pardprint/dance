@@ -82,28 +82,7 @@ namespace dance.API.Controllers
             return Ok(subscriptions);
         }
 
-        // GET: api/subscriptions/amountrange?min=1000&max=10000
-        [HttpGet("amountrange")]
-        public async Task<ActionResult<List<Subscription>>> GetByAmountRange(
-            [FromQuery] decimal? min,
-            [FromQuery] decimal? max)
-        {
-            var query = _dbContext.Subscriptions
-                .Include(s => s.Client)
-                .Include(s => s.Group)
-                .AsQueryable();
-
-            if (min.HasValue)
-                query = query.Where(s => s.Amount >= min.Value);
-
-            if (max.HasValue)
-                query = query.Where(s => s.Amount <= max.Value);
-
-            var subscriptions = await query.ToListAsync();
-            return Ok(subscriptions);
-        }
-
-        // GET: api/subscriptions/active (все активные абонементы)
+        // GET: api/subscriptions/active
         [HttpGet("active")]
         public async Task<ActionResult<List<Subscription>>> GetActive()
         {
@@ -120,12 +99,10 @@ namespace dance.API.Controllers
         [HttpPost]
         public async Task<ActionResult<Subscription>> Create(Subscription subscription)
         {
-            // Проверяем, существует ли клиент
             var client = await _dbContext.Clients.FindAsync(subscription.Client_id);
             if (client == null)
                 return BadRequest(new { message = "Клиент не найден" });
 
-            // Проверяем, существует ли группа
             var group = await _dbContext.Groups.FindAsync(subscription.Group_id);
             if (group == null)
                 return BadRequest(new { message = "Группа не найдена" });
@@ -133,7 +110,6 @@ namespace dance.API.Controllers
             _dbContext.Subscriptions.Add(subscription);
             await _dbContext.SaveChangesAsync();
 
-            // Загружаем связанные данные для ответа
             var createdSubscription = await _dbContext.Subscriptions
                 .Include(s => s.Client)
                 .Include(s => s.Group)
@@ -153,7 +129,6 @@ namespace dance.API.Controllers
             if (existingSubscription == null)
                 return NotFound(new { message = "Абонемент не найден" });
 
-            // Обновляем поля
             existingSubscription.Client_id = subscription.Client_id;
             existingSubscription.Group_id = subscription.Group_id;
             existingSubscription.Amount = subscription.Amount;
@@ -164,7 +139,21 @@ namespace dance.API.Controllers
             return Ok(existingSubscription);
         }
 
-        // PUT: api/subscriptions/{id}/deactivate (деактивировать абонемент)
+        // PATCH: api/subscriptions/{id}/status  ← НОВЫЙ
+        [HttpPatch("{id}/status")]
+        public async Task<IActionResult> UpdateStatus(int id, [FromBody] SubStatusDto dto)
+        {
+            var subscription = await _dbContext.Subscriptions.FindAsync(id);
+            if (subscription == null)
+                return NotFound(new { message = "Абонемент не найден" });
+
+            subscription.Status = dto.Status;
+            await _dbContext.SaveChangesAsync();
+
+            return Ok(new { message = "Статус обновлён" });
+        }
+
+        // PUT: api/subscriptions/{id}/deactivate
         [HttpPut("{id}/deactivate")]
         public async Task<IActionResult> Deactivate(int id)
         {
@@ -191,5 +180,10 @@ namespace dance.API.Controllers
 
             return Ok(new { message = "Абонемент удален" });
         }
+    }
+
+    public class SubStatusDto
+    {
+        public string Status { get; set; } = "";
     }
 }
