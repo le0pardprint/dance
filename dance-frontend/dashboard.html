@@ -117,6 +117,7 @@
               <button class="btn btn-ghost btn-sm" id="add-user-btn">+ Пользователь</button>
               <button class="btn btn-ghost btn-sm" id="add-trainer-btn" style="display:none">+ Тренер</button>
               <button class="btn btn-ghost btn-sm" id="add-group-btn" style="display:none">+ Группа</button>
+              <button class="btn btn-ghost btn-sm" id="add-class-btn" style="display:none">+ Занятие</button>
           </div>
           </div>
           <div class="card-body">
@@ -341,6 +342,35 @@
     <div class="modal-footer">
       <button class="btn btn-ghost" id="add-trainer-modal-cancel">Отмена</button>
       <button class="btn btn-primary" id="add-trainer-modal-save">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- MODAL: добавить занятие -->
+<div class="modal-overlay" id="add-class-modal">
+  <div class="modal">
+    <div class="modal-head"><h3>Новое занятие</h3></div>
+    <div class="modal-body">
+      <div id="add-class-modal-error" class="error-box" style="display:none"></div>
+      <div class="field"><label>Группа *</label><select id="ac-group"></select></div>
+      <div class="field"><label>Тренер *</label><select id="ac-trainer"></select></div>
+      <div class="form-row">
+        <div class="field"><label>Дата *</label><input id="ac-date" type="date" /></div>
+        <div class="field"><label>Время *</label><input id="ac-time" type="time" /></div>
+      </div>
+      <div class="field">
+        <label>Статус</label>
+        <select id="ac-status">
+          <option value="Запланировано">Запланировано</option>
+          <option value="Проведено">Проведено</option>
+          <option value="Отменено">Отменено</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="add-class-modal-cancel">Отмена</button>
+      <button class="btn btn-primary" id="add-class-modal-save">Сохранить</button>
     </div>
   </div>
 </div>

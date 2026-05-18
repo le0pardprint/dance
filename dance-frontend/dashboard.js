@@ -50,8 +50,10 @@ document.querySelectorAll('.tabs').forEach(tabsEl => {
         if (ROLE === 'Admin') {
           const addGroupBtn   = document.getElementById('add-group-btn');
           const addTrainerBtn = document.getElementById('add-trainer-btn');
+          const addClassBtn   = document.getElementById('add-class-btn');
           if (addGroupBtn)   addGroupBtn.style.display   = paneId === 'admin-groups'   ? '' : 'none';
           if (addTrainerBtn) addTrainerBtn.style.display  = paneId === 'admin-trainers' ? '' : 'none';
+          if (addClassBtn)   addClassBtn.style.display    = paneId === 'admin-groups'   ? '' : 'none';
       }
       }
     });
@@ -345,64 +347,66 @@ async function loadPane(paneId) {
       break;
     }
     case 'admin-groups': {
-      const data = await fetchCached('adminGroups', '/api/Groups');
-      if (!data) { showErr(el, 'Ошибка загрузки'); return; }
-      updateAdminStats(null, null, data);
-      el.innerHTML = buildAdminGroupsTable(data);
-      el.querySelectorAll('.expand-group-btn').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          const groupId  = btn.dataset.id;
-          const idx      = btn.dataset.idx;
-          const subRows  = el.querySelectorAll(`.group-members-${idx}`);
-          const expanded = btn.dataset.expanded === '1';
-          if (!expanded && subRows.length === 0) {
-            const { ok, data: regs } = await apiFetch(`/api/Registration/bygroup/${groupId}`);
-            if (ok && regs?.length) {
-              regs.forEach(r => {
-                const row = document.createElement('tr');
-                row.className = `sub-row group-members-${idx}`;
-                row.innerHTML = `
-                  <td colspan="2" style="padding-left:32px">
-                    ${r.client?.lastName ?? ''} ${r.client?.firstName ?? ''}
-                  </td>
-                  <td style="color:var(--muted)">${r.client?.phone ?? '—'}</td>
-                  <td colspan="3"></td>`;
-                btn.closest('tr').after(row);
-              });
-            }
-          } else {
-            subRows.forEach(r => r.style.display = expanded ? 'none' : '');
-          }
-          btn.dataset.expanded = expanded ? '0' : '1';
-          btn.textContent = expanded ? 'Состав' : 'Скрыть';
-        });
-      });
-      el.querySelectorAll('.change-group-status-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          document.getElementById('gs-group-id').value = btn.dataset.id;
-          document.getElementById('gs-status').value   = btn.dataset.status;
-          document.getElementById('group-status-modal').classList.add('open');
-        });
-      });
-      el.querySelectorAll('.del-group-btn').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          const id = btn.dataset.id;
-          if (!confirm('Удалить группу? Все связанные данные будут удалены.')) return;
-          const { ok } = await apiFetch(`/api/Groups/${id}`, { method: 'DELETE' });
-          if (ok) {
-            delete cache.adminGroups;
-            const pane = document.getElementById('admin-groups');
-            delete pane.dataset.loaded;
-            loadPane('admin-groups');
-          } else {
-            alert('Ошибка при удалении группы');
-          }
-        });
-      });
-      const addGroupBtn3 = document.getElementById('add-group-btn');
-      if (addGroupBtn3) addGroupBtn3.style.display = '';
-      break;
-    }
+  const data = await fetchCached('adminGroups', '/api/Groups');
+  if (!data) { showErr(el, 'Ошибка загрузки'); return; }
+  updateAdminStats(null, null, data);
+  el.innerHTML = buildAdminGroupsTable(data);
+  el.querySelectorAll('.expand-group-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const groupId  = btn.dataset.id;
+      const idx      = btn.dataset.idx;
+      const subRows  = el.querySelectorAll(`.group-members-${idx}`);
+      const expanded = btn.dataset.expanded === '1';
+      if (!expanded && subRows.length === 0) {
+        const { ok, data: regs } = await apiFetch(`/api/Registration/bygroup/${groupId}`);
+        if (ok && regs?.length) {
+          regs.forEach(r => {
+            const row = document.createElement('tr');
+            row.className = `sub-row group-members-${idx}`;
+            row.innerHTML = `
+              <td colspan="2" style="padding-left:32px">
+                ${r.client?.lastName ?? ''} ${r.client?.firstName ?? ''}
+              </td>
+              <td style="color:var(--muted)">${r.client?.phone ?? '—'}</td>
+              <td colspan="3"></td>`;
+            btn.closest('tr').after(row);
+          });
+        }
+      } else {
+        subRows.forEach(r => r.style.display = expanded ? 'none' : '');
+      }
+      btn.dataset.expanded = expanded ? '0' : '1';
+      btn.textContent = expanded ? 'Состав' : 'Скрыть';
+    });
+  });
+  el.querySelectorAll('.change-group-status-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.getElementById('gs-group-id').value = btn.dataset.id;
+      document.getElementById('gs-status').value   = btn.dataset.status;
+      document.getElementById('group-status-modal').classList.add('open');
+    });
+  });
+  el.querySelectorAll('.del-group-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.id;
+      if (!confirm('Удалить группу? Все связанные данные будут удалены.')) return;
+      const { ok } = await apiFetch(`/api/Groups/${id}`, { method: 'DELETE' });
+      if (ok) {
+        delete cache.adminGroups;
+        const pane = document.getElementById('admin-groups');
+        delete pane.dataset.loaded;
+        loadPane('admin-groups');
+      } else {
+        alert('Ошибка при удалении группы');
+      }
+    });
+  });
+  const addGroupBtn3 = document.getElementById('add-group-btn');
+  if (addGroupBtn3) addGroupBtn3.style.display = '';
+  const addClassBtn = document.getElementById('add-class-btn');
+  if (addClassBtn) addClassBtn.style.display = '';
+  break;
+}
 
     default: break;
   }
