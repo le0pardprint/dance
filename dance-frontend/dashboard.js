@@ -634,16 +634,24 @@ function renderClientsTable(el, data) {
   </table></div>`;
 
   el.querySelectorAll('.edit-client-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.getElementById('ef-id').value        = btn.dataset.id;
-      document.getElementById('ef-lastName').value  = btn.dataset.ln;
-      document.getElementById('ef-firstName').value = btn.dataset.fn;
-      document.getElementById('ef-age').value       = btn.dataset.age;
-      document.getElementById('ef-phone').value     = btn.dataset.phone;
-      document.getElementById('ef-email').value     = btn.dataset.email;
-      document.getElementById('edit-client-modal').classList.add('open');
-    });
+  btn.addEventListener('click', async () => {
+    document.getElementById('ef-id').value        = btn.dataset.id;
+    document.getElementById('ef-lastName').value  = btn.dataset.ln;
+    document.getElementById('ef-firstName').value = btn.dataset.fn;
+    document.getElementById('ef-age').value       = btn.dataset.age;
+    document.getElementById('ef-phone').value     = btn.dataset.phone;
+    document.getElementById('ef-email').value     = btn.dataset.email;
+    document.getElementById('ef-amount').value    = '';
+    // Загружаем группы
+    const groups = await fetchCached('adminGroups', '/api/Groups');
+    const grpSelect = document.getElementById('ef-group');
+    if (groups && grpSelect) {
+      grpSelect.innerHTML = '<option value="">— Без группы —</option>' +
+        groups.map(g => `<option value="${g.group_id ?? g.groupId}">${g.name}</option>`).join('');
+    }
+    document.getElementById('edit-client-modal').classList.add('open');
   });
+});
 
   el.querySelectorAll('.del-client-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
@@ -781,15 +789,27 @@ document.getElementById('edit-modal-save').addEventListener('click', async () =>
   });
   saveBtn.textContent = 'Сохранить'; saveBtn.disabled = false;
   if (ok) {
-    editModal.classList.remove('open');
-    delete cache.adminClients;
-    const pane = document.getElementById('admin-clients');
-    delete pane.dataset.loaded;
-    loadPane('admin-clients');
-  } else {
-    editModalError.textContent = getField(data, 'message') ?? 'Ошибка сохранения';
-    editModalError.style.display = 'block';
+  // Если выбрана группа — добавляем регистрацию и абонемент
+  const groupId = document.getElementById('ef-group').value;
+  const amount  = document.getElementById('ef-amount').value;
+  if (groupId) {
+    await apiFetch('/api/Registration', {
+      method: 'POST',
+      body: JSON.stringify({ client_id: parseInt(id), group_id: parseInt(groupId), registration_date: new Date().toISOString() }),
+    });
+    if (amount) {
+      await apiFetch('/api/Subscriptions', {
+        method: 'POST',
+        body: JSON.stringify({ client_id: parseInt(id), group_id: parseInt(groupId), amount: parseFloat(amount), status: 'Активен' }),
+      });
+    }
   }
+  editModal.classList.remove('open');
+  delete cache.adminClients;
+  const pane = document.getElementById('admin-clients');
+  delete pane.dataset.loaded;
+  loadPane('admin-clients');
+}
 });
 
 // Modal: добавить пользователя
@@ -1051,15 +1071,12 @@ document.getElementById('add-trainer-modal-save')?.addEventListener('click', asy
     body: JSON.stringify({ lastName, firstName, direction_id: parseInt(directionId), phone, email }),
   });
   saveBtn.textContent = 'Сохранить'; saveBtn.disabled = false;
-  if (ok) {
-    addTrainerModal.classList.remove('open');
-    delete cache.adminTrainers;
-    const pane = document.getElementById('admin-trainers');
-    delete pane.dataset.loaded;
-    loadPane('admin-trainers');
-  } else {
-    addTrainerModalError.textContent = getField(data, 'message') ?? 'Ошибка сохранения';
-    addTrainerModalError.style.display = 'block';
+ if (ok) {
+  addTrainerModal.classList.remove('open');
+  delete cache.adminTrainers;
+  const pane = document.getElementById('admin-trainers');
+  delete pane.dataset.loaded;
+  loadPane('admin-trainers');
   }
 });
 
