@@ -623,6 +623,8 @@ document.getElementById('modal-save').addEventListener('click', async () => {
   const age       = document.getElementById('f-age').value;
   const phone     = document.getElementById('f-phone').value.trim();
   const email     = document.getElementById('f-email').value.trim();
+  const groupId   = document.getElementById('f-group').value;
+  const amount    = document.getElementById('f-amount').value;
   modalError.style.display = 'none';
   if (!lastName || !firstName) {
     modalError.textContent = 'Заполните фамилию и имя';
