@@ -430,8 +430,6 @@ case 'admin-schedule': {
       document.getElementById('status-modal').classList.add('open');
     });
   });
-  document.getElementById('add-client-btn').style.display = 'none';
-  document.getElementById('add-user-btn').style.display   = 'none';
   const addGroupBtn = document.getElementById('add-group-btn');
   if (addGroupBtn) addGroupBtn.style.display = 'none';
   const addTrainerBtn = document.getElementById('add-trainer-btn');
