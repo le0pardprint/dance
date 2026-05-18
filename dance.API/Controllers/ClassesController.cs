@@ -90,7 +90,7 @@ namespace dance.API.Controllers
             return Ok(classes);
         }
 
-        // GET: api/classes/status?status=Подтверждено
+        // GET: api/classes/status?status=Запланировано
         [HttpGet("status")]
         public async Task<ActionResult<List<Class>>> GetByStatus([FromQuery] string status)
         {
@@ -107,12 +107,10 @@ namespace dance.API.Controllers
         [HttpPost]
         public async Task<ActionResult<Class>> Create(Class classObj)
         {
-            // Проверяем, существует ли группа
             var group = await _dbContext.Groups.FindAsync(classObj.Group_id);
             if (group == null)
                 return BadRequest(new { message = "Группа не найдена" });
 
-            // Проверяем, существует ли тренер
             var trainer = await _dbContext.Trainers.FindAsync(classObj.Trainer_id);
             if (trainer == null)
                 return BadRequest(new { message = "Тренер не найден" });
@@ -120,7 +118,6 @@ namespace dance.API.Controllers
             _dbContext.Classes.Add(classObj);
             await _dbContext.SaveChangesAsync();
 
-            // Загружаем связанные данные для ответа
             var createdClass = await _dbContext.Classes
                 .Include(c => c.Group)
                 .Include(c => c.Trainer)
@@ -140,7 +137,6 @@ namespace dance.API.Controllers
             if (existingClass == null)
                 return NotFound(new { message = "Занятие не найдено" });
 
-            // Обновляем поля
             existingClass.Group_id = classObj.Group_id;
             existingClass.Trainer_id = classObj.Trainer_id;
             existingClass.Date = classObj.Date;
@@ -152,6 +148,20 @@ namespace dance.API.Controllers
             return NoContent();
         }
 
+        // PATCH: api/classes/{id}/status
+        [HttpPatch("{id}/status")]
+        public async Task<IActionResult> UpdateStatus(int id, [FromBody] ClassStatusDto dto)
+        {
+            var classObj = await _dbContext.Classes.FindAsync(id);
+            if (classObj == null)
+                return NotFound(new { message = "Занятие не найдено" });
+
+            classObj.Status = dto.Status;
+            await _dbContext.SaveChangesAsync();
+
+            return Ok(new { message = "Статус обновлён" });
+        }
+
         // DELETE: api/classes/{id}
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
@@ -160,7 +170,6 @@ namespace dance.API.Controllers
             if (classObj == null)
                 return NotFound(new { message = "Занятие не найдено" });
 
-            // Проверяем, есть ли записи о посещаемости
             var hasAttendance = await _dbContext.AttendanceRecords.AnyAsync(a => a.Class_id == id);
             if (hasAttendance)
                 return BadRequest(new { message = "Нельзя удалить занятие, у которого есть записи о посещаемости" });
@@ -170,5 +179,10 @@ namespace dance.API.Controllers
 
             return Ok(new { message = "Занятие удалено" });
         }
+    }
+
+    public class ClassStatusDto
+    {
+        public string Status { get; set; } = "";
     }
 }
