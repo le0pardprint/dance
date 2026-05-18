@@ -45,7 +45,7 @@ namespace dance.API.Controllers
             return Ok(client);
         }
 
-        // GET: api/clients/search?lastName=Иванов&firstName=Иван&phone=...
+        // GET: api/clients/search
         [HttpGet("search")]
         public async Task<ActionResult<List<Client>>> Search(
             [FromQuery] string? lastName,
@@ -57,36 +57,14 @@ namespace dance.API.Controllers
 
             if (!string.IsNullOrEmpty(lastName))
                 query = query.Where(c => c.LastName.Contains(lastName));
-
             if (!string.IsNullOrEmpty(firstName))
                 query = query.Where(c => c.FirstName.Contains(firstName));
-
             if (!string.IsNullOrEmpty(phone))
                 query = query.Where(c => c.Phone != null && c.Phone.Contains(phone));
-
             if (!string.IsNullOrEmpty(email))
                 query = query.Where(c => c.Email != null && c.Email.Contains(email));
 
-            var clients = await query.ToListAsync();
-            return Ok(clients);
-        }
-
-        // GET: api/clients/byage?minAge=10&maxAge=18
-        [HttpGet("byage")]
-        public async Task<ActionResult<List<Client>>> GetByAge(
-            [FromQuery] int? minAge,
-            [FromQuery] int? maxAge)
-        {
-            var query = _dbContext.Clients.AsQueryable();
-
-            if (minAge.HasValue)
-                query = query.Where(c => c.Age >= minAge.Value);
-
-            if (maxAge.HasValue)
-                query = query.Where(c => c.Age <= maxAge.Value);
-
-            var clients = await query.ToListAsync();
-            return Ok(clients);
+            return Ok(await query.ToListAsync());
         }
 
         // POST: api/clients
@@ -113,7 +91,6 @@ namespace dance.API.Controllers
             if (existingClient == null)
                 return NotFound(new { message = "Клиент не найден" });
 
-            // Обновляем поля
             existingClient.LastName = client.LastName;
             existingClient.FirstName = client.FirstName;
             existingClient.Age = client.Age;
@@ -125,26 +102,36 @@ namespace dance.API.Controllers
             return Ok(existingClient);
         }
 
-        // DELETE: api/clients/{id}
+        // DELETE: api/clients/{id} — каскадное удаление
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var client = await _dbContext.Clients.FindAsync(id);
+            var client = await _dbContext.Clients
+                .Include(c => c.AttendanceRecords)
+                .Include(c => c.Registrations)
+                .Include(c => c.Subscriptions)
+                .FirstOrDefaultAsync(c => c.Client_id == id);
+
             if (client == null)
                 return NotFound(new { message = "Клиент не найден" });
 
-            // Проверяем, есть ли связанные записи
-            var hasAttendance = await _dbContext.AttendanceRecords.AnyAsync(a => a.Client_id == id);
-            var hasRegistrations = await _dbContext.Registrations.AnyAsync(r => r.Client_id == id);
-            var hasSubscriptions = await _dbContext.Subscriptions.AnyAsync(s => s.Client_id == id);
+            // Удаляем связанные данные
+            _dbContext.AttendanceRecords.RemoveRange(client.AttendanceRecords);
+            _dbContext.Registrations.RemoveRange(client.Registrations);
+            _dbContext.Subscriptions.RemoveRange(client.Subscriptions);
 
-            if (hasAttendance || hasRegistrations || hasSubscriptions)
-                return BadRequest(new { message = "Нельзя удалить клиента, у которого есть записи о посещениях, регистрациях или абонементах" });
+            // Отвязываем пользователя если есть
+            if (client.User_id.HasValue)
+            {
+                var user = await _dbContext.Users.FindAsync(client.User_id.Value);
+                if (user != null)
+                    user.Client_id = null;
+            }
 
             _dbContext.Clients.Remove(client);
             await _dbContext.SaveChangesAsync();
 
-            return Ok(new { message = "Клиент удален" });
+            return Ok(new { message = "Клиент и все связанные данные удалены" });
         }
     }
 }
