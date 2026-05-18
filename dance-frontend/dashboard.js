@@ -591,6 +591,7 @@ function renderClientsTable(el, data) {
           data-age="${c.age??''}" data-phone="${c.phone??''}" data-email="${c.email??''}">
           Изменить
         </button>
+        <button class="btn btn-ghost btn-sm reg-client-btn" data-id="${id}" data-name="${c.lastName??''} ${c.firstName??''}">В группу</button>
         <button class="btn btn-danger btn-sm del-client-btn" data-id="${id}">Удалить</button>
       </td>
     </tr>`;
@@ -627,6 +628,18 @@ function renderClientsTable(el, data) {
       }
     });
   });
+  el.querySelectorAll('.reg-client-btn').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    document.getElementById('reg-client-id').value   = btn.dataset.id;
+    document.getElementById('reg-client-name').textContent = btn.dataset.name;
+    const groups = await fetchCached('adminGroups', '/api/Groups');
+    const grpSelect = document.getElementById('reg-group');
+    if (groups && grpSelect) {
+      grpSelect.innerHTML = groups.map(g => `<option value="${g.group_id ?? g.groupId}">${g.name}</option>`).join('');
+    }
+    document.getElementById('reg-client-modal').classList.add('open');
+  });
+});
 }
 
 // Modal: добавить клиента
@@ -1005,6 +1018,104 @@ document.getElementById('add-trainer-modal-save')?.addEventListener('click', asy
   } else {
     addTrainerModalError.textContent = getField(data, 'message') ?? 'Ошибка сохранения';
     addTrainerModalError.style.display = 'block';
+  }
+});
+
+// Modal: добавить занятие
+const addClassModal      = document.getElementById('add-class-modal');
+const addClassModalError = document.getElementById('add-class-modal-error');
+
+document.getElementById('add-class-btn')?.addEventListener('click', async () => {
+  addClassModalError.style.display = 'none';
+  const groups  = await fetchCached('adminGroups',  '/api/Groups');
+  const trainers = await fetchCached('adminTrainers', '/api/Trainers');
+  const grpSelect = document.getElementById('ac-group');
+  const trnSelect = document.getElementById('ac-trainer');
+  if (groups && grpSelect)
+    grpSelect.innerHTML = groups.map(g => `<option value="${g.group_id ?? g.groupId}">${g.name}</option>`).join('');
+  if (trainers && trnSelect)
+    trnSelect.innerHTML = trainers.map(t => `<option value="${t.trainer_id ?? t.trainerId}">${t.lastName} ${t.firstName}</option>`).join('');
+  // Ставим сегодняшнюю дату по умолчанию
+  document.getElementById('ac-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('ac-time').value = '10:00';
+  addClassModal.classList.add('open');
+});
+addClassModal?.addEventListener('click', e => { if (e.target === addClassModal) addClassModal.classList.remove('open'); });
+document.getElementById('add-class-modal-cancel')?.addEventListener('click', () => addClassModal.classList.remove('open'));
+
+document.getElementById('add-class-modal-save')?.addEventListener('click', async () => {
+  const groupId   = document.getElementById('ac-group').value;
+  const trainerId = document.getElementById('ac-trainer').value;
+  const date      = document.getElementById('ac-date').value;
+  const time      = document.getElementById('ac-time').value;
+  const status    = document.getElementById('ac-status').value;
+  addClassModalError.style.display = 'none';
+  if (!groupId || !date || !time) {
+    addClassModalError.textContent = 'Заполните все обязательные поля';
+    addClassModalError.style.display = 'block'; return;
+  }
+  const saveBtn = document.getElementById('add-class-modal-save');
+  saveBtn.textContent = 'Сохранение…'; saveBtn.disabled = true;
+  const { ok, data } = await apiFetch('/api/Classes', {
+    method: 'POST',
+    body: JSON.stringify({
+      group_id:   parseInt(groupId),
+      trainer_id: parseInt(trainerId),
+      date:       new Date(date).toISOString(),
+      time:       time,
+      status
+    }),
+  });
+  saveBtn.textContent = 'Сохранить'; saveBtn.disabled = false;
+  if (ok) {
+    addClassModal.classList.remove('open');
+    alert('Занятие добавлено!');
+  } else {
+    addClassModalError.textContent = getField(data, 'message') ?? 'Ошибка сохранения';
+    addClassModalError.style.display = 'block';
+  }
+});
+
+// Modal: записать клиента в группу
+const regClientModal      = document.getElementById('reg-client-modal');
+const regClientModalError = document.getElementById('reg-client-modal-error');
+
+document.getElementById('reg-client-modal-cancel')?.addEventListener('click', () => regClientModal.classList.remove('open'));
+regClientModal?.addEventListener('click', e => { if (e.target === regClientModal) regClientModal.classList.remove('open'); });
+
+document.getElementById('reg-client-modal-save')?.addEventListener('click', async () => {
+  const clientId = document.getElementById('reg-client-id').value;
+  const groupId  = document.getElementById('reg-group').value;
+  const amount   = document.getElementById('reg-amount').value;
+  regClientModalError.style.display = 'none';
+  if (!clientId || !groupId) {
+    regClientModalError.textContent = 'Выберите группу';
+    regClientModalError.style.display = 'block'; return;
+  }
+  const saveBtn = document.getElementById('reg-client-modal-save');
+  saveBtn.textContent = 'Запись…'; saveBtn.disabled = true;
+
+  // Создаём регистрацию
+  const { ok } = await apiFetch('/api/Registration', {
+    method: 'POST',
+    body: JSON.stringify({ client_id: parseInt(clientId), group_id: parseInt(groupId), registration_date: new Date().toISOString() }),
+  });
+
+  // Если указана сумма — создаём абонемент
+  if (ok && amount) {
+    await apiFetch('/api/Subscriptions', {
+      method: 'POST',
+      body: JSON.stringify({ client_id: parseInt(clientId), group_id: parseInt(groupId), amount: parseFloat(amount), status: 'Активен' }),
+    });
+  }
+
+  saveBtn.textContent = 'Записать'; saveBtn.disabled = false;
+  if (ok) {
+    regClientModal.classList.remove('open');
+    alert('Клиент записан в группу!');
+  } else {
+    regClientModalError.textContent = 'Ошибка записи';
+    regClientModalError.style.display = 'block';
   }
 });
 

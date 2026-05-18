@@ -375,6 +375,24 @@
   </div>
 </div>
 
+<!-- MODAL: записать клиента в группу -->
+<div class="modal-overlay" id="reg-client-modal">
+  <div class="modal">
+    <div class="modal-head"><h3>Записать в группу</h3></div>
+    <div class="modal-body">
+      <div id="reg-client-modal-error" class="error-box" style="display:none"></div>
+      <p style="margin-bottom:14px;font-size:14px">Клиент: <strong id="reg-client-name"></strong></p>
+      <input type="hidden" id="reg-client-id" />
+      <div class="field"><label>Группа *</label><select id="reg-group"></select></div>
+      <div class="field"><label>Сумма абонемента</label><input id="reg-amount" type="number" placeholder="3000" /></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="reg-client-modal-cancel">Отмена</button>
+      <button class="btn btn-primary" id="reg-client-modal-save">Записать</button>
+    </div>
+  </div>
+</div>
+
 <script src="api.js"></script>
 <script src="dashboard.js"></script>
 </body>
