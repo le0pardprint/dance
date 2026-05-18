@@ -17,6 +17,27 @@ namespace dance.API.Controllers
             _dbContext = dbContext;
         }
 
+        // GET: api/client/profile
+        [HttpGet("profile")]
+        public async Task<IActionResult> GetMyProfile()
+        {
+            var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
+            var client = await _dbContext.Clients.FirstOrDefaultAsync(c => c.User_id == userId);
+
+            if (client == null)
+                return NotFound(new { message = "Клиент не найден" });
+
+            return Ok(new
+            {
+                client.Client_id,
+                client.FirstName,
+                client.LastName,
+                client.Age,
+                client.Phone,
+                client.Email
+            });
+        }
+
         // GET: api/client/schedule
         [HttpGet("schedule")]
         public async Task<IActionResult> GetMySchedule()
@@ -27,7 +48,6 @@ namespace dance.API.Controllers
             if (client == null)
                 return NotFound(new { message = "Клиент не найден" });
 
-            // Группы, в которых состоит клиент
             var groupIds = await _dbContext.Registrations
                 .Where(r => r.Client_id == client.Client_id)
                 .Select(r => r.Group_id)
