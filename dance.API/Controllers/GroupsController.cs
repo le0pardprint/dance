@@ -99,17 +99,33 @@ namespace dance.API.Controllers
             return Ok(new { message = "Статус обновлён" });
         }
 
-        // DELETE: api/groups/{id}
+        // DELETE: api/groups/{id} — каскадное удаление
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var group = await _dbContext.Groups.FindAsync(id);
+            var group = await _dbContext.Groups
+                .Include(g => g.Registrations)
+                .Include(g => g.Subscriptions)
+                .Include(g => g.Classes)
+                    .ThenInclude(c => c.AttendanceRecords)
+                .FirstOrDefaultAsync(g => g.Group_id == id);
+
             if (group == null)
                 return NotFound(new { message = "Группа не найдена" });
 
+            // Удаляем посещаемость занятий
+            foreach (var cls in group.Classes)
+                _dbContext.AttendanceRecords.RemoveRange(cls.AttendanceRecords);
+
+            // Удаляем занятия, регистрации, абонементы
+            _dbContext.Classes.RemoveRange(group.Classes);
+            _dbContext.Registrations.RemoveRange(group.Registrations);
+            _dbContext.Subscriptions.RemoveRange(group.Subscriptions);
+
             _dbContext.Groups.Remove(group);
             await _dbContext.SaveChangesAsync();
-            return Ok(new { message = "Группа удалена" });
+
+            return Ok(new { message = "Группа и все связанные данные удалены" });
         }
     }
 
