@@ -57,7 +57,7 @@ namespace dance.API.Controllers
             return Ok(clientsWithDebts);
         }
 
-        // GET: api/finance/payments-summary — с именами клиентов
+        // GET: api/finance/payments-summary
         [HttpGet("payments-summary")]
         public async Task<IActionResult> GetPaymentsSummary()
         {
@@ -71,13 +71,13 @@ namespace dance.API.Controllers
                 })
                 .ToListAsync();
 
-            // Детали по каждому абонементу с именем клиента
             var details = await _dbContext.Subscriptions
                 .Include(s => s.Client)
                 .Include(s => s.Group)
                 .Select(s => new
                 {
                     s.Sub_id,
+                    s.Client_id,
                     ClientName = s.Client.LastName + " " + s.Client.FirstName,
                     GroupName = s.Group.Name,
                     s.Amount,
@@ -98,7 +98,7 @@ namespace dance.API.Controllers
             });
         }
 
-        // POST: api/finance/add-debt — добавить долг клиенту
+        // POST: api/finance/add-debt
         [HttpPost("add-debt")]
         public async Task<IActionResult> AddDebt([FromBody] AddDebtDto dto)
         {
