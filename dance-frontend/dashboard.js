@@ -48,9 +48,11 @@ document.querySelectorAll('.tabs').forEach(tabsEl => {
         pane.classList.add('active');
         if (!pane.dataset.loaded) loadPane(paneId);
         if (ROLE === 'Admin') {
-          const addGroupBtn = document.getElementById('add-group-btn');
-          if (addGroupBtn) addGroupBtn.style.display = paneId === 'admin-groups' ? '' : 'none';
-        }
+          const addGroupBtn   = document.getElementById('add-group-btn');
+          const addTrainerBtn = document.getElementById('add-trainer-btn');
+          if (addGroupBtn)   addGroupBtn.style.display   = paneId === 'admin-groups'   ? '' : 'none';
+          if (addTrainerBtn) addTrainerBtn.style.display  = paneId === 'admin-trainers' ? '' : 'none';
+      }
       }
     });
   });
@@ -225,16 +227,19 @@ async function loadPane(paneId) {
       const data = await fetchCached('accSummary', '/api/Finance/payments-summary');
       if (!data) { showErr(el, 'Ошибка загрузки'); return; }
       updateAccStats(null, data);
-      const paid   = data.summary?.filter(s => s.status === 'Оплачен')   ?? [];
-      const active = data.summary?.filter(s => s.status === 'Активен')   ?? [];
-      const other  = data.summary?.filter(s => s.status !== 'Оплачен' && s.status !== 'Активен') ?? [];
+      const paid   = data.details?.filter(s => s.status === 'Оплачен')  ?? [];
+      const active = data.details?.filter(s => s.status === 'Активен')  ?? [];
+      const other  = data.details?.filter(s => s.status !== 'Оплачен' && s.status !== 'Активен') ?? [];
       el.innerHTML = `
         <h4 style="margin-bottom:12px;font-size:14px;color:var(--muted)">Оплаченные</h4>
-        ${buildTable(['Статус','Количество','Сумма'], paid.map(s => [badge(s.status), s.count, fmtMoney(s.totalAmount)]), 'Нет')}
+        ${buildTable(['Клиент','Группа','Сумма','Статус'],
+          paid.map(s => [s.clientName, s.groupName, fmtMoney(s.amount), badge(s.status)]), 'Нет')}
         <h4 style="margin:16px 0 12px;font-size:14px;color:var(--muted)">Активные</h4>
-        ${buildTable(['Статус','Количество','Сумма'], active.map(s => [badge(s.status), s.count, fmtMoney(s.totalAmount)]), 'Нет')}
+        ${buildTable(['Клиент','Группа','Сумма','Статус'],
+          active.map(s => [s.clientName, s.groupName, fmtMoney(s.amount), badge(s.status)]), 'Нет')}
         ${other.length ? `<h4 style="margin:16px 0 12px;font-size:14px;color:var(--muted)">Прочие</h4>
-        ${buildTable(['Статус','Количество','Сумма'], other.map(s => [badge(s.status), s.count, fmtMoney(s.totalAmount)]), 'Нет')}` : ''}
+        ${buildTable(['Клиент','Группа','Сумма','Статус'],
+          other.map(s => [s.clientName, s.groupName, fmtMoney(s.amount), badge(s.status)]), 'Нет')}` : ''}
       `;
       break;
     }
@@ -307,6 +312,8 @@ async function loadPane(paneId) {
           btn.textContent = expanded ? 'Расписание' : 'Скрыть';
         });
       });
+      const addTrainerBtn = document.getElementById('add-trainer-btn');
+      if (addTrainerBtn) addTrainerBtn.style.display = '';
       const addGroupBtn2 = document.getElementById('add-group-btn');
       if (addGroupBtn2) addGroupBtn2.style.display = 'none';
       break;
@@ -349,6 +356,21 @@ async function loadPane(paneId) {
           document.getElementById('gs-group-id').value = btn.dataset.id;
           document.getElementById('gs-status').value   = btn.dataset.status;
           document.getElementById('group-status-modal').classList.add('open');
+        });
+      });
+      el.querySelectorAll('.del-group-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const id = btn.dataset.id;
+          if (!confirm('Удалить группу? Все связанные данные будут удалены.')) return;
+          const { ok } = await apiFetch(`/api/Groups/${id}`, { method: 'DELETE' });
+          if (ok) {
+            delete cache.adminGroups;
+            const pane = document.getElementById('admin-groups');
+            delete pane.dataset.loaded;
+            loadPane('admin-groups');
+          } else {
+            alert('Ошибка при удалении группы');
+          }
         });
       });
       const addGroupBtn3 = document.getElementById('add-group-btn');
@@ -508,6 +530,7 @@ function buildAdminGroupsTable(data) {
       <td>
         <button class="btn btn-ghost btn-sm change-group-status-btn" data-id="${gid}" data-status="${g.status}">Статус</button>
         <button class="btn btn-ghost btn-sm expand-group-btn" data-idx="${i}" data-id="${gid}" data-expanded="0">Состав</button>
+        <button class="btn btn-danger btn-sm del-group-btn" data-id="${gid}">Удалить</button>
       </td>
     </tr>`;
   });
@@ -835,6 +858,99 @@ document.getElementById('dm-save').addEventListener('click', async () => {
     loadPane('acc-debts');
   } else {
     alert('Ошибка изменения статуса');
+  }
+});
+
+// Modal: добавить долг (бухгалтер)
+const addDebtModal      = document.getElementById('add-debt-modal');
+const addDebtModalError = document.getElementById('add-debt-modal-error');
+
+document.getElementById('add-debt-btn')?.addEventListener('click', async () => {
+  addDebtModalError.style.display = 'none';
+  const groups = await fetchCached('accGroups', '/api/Groups');
+  const grpSelect = document.getElementById('ad-group');
+  if (groups && grpSelect) {
+    grpSelect.innerHTML = groups.map(g => `<option value="${g.group_id ?? g.groupId}">${g.name}</option>`).join('');
+  }
+  addDebtModal.classList.add('open');
+});
+addDebtModal?.addEventListener('click', e => { if (e.target === addDebtModal) addDebtModal.classList.remove('open'); });
+document.getElementById('add-debt-modal-cancel')?.addEventListener('click', () => addDebtModal.classList.remove('open'));
+
+document.getElementById('add-debt-modal-save')?.addEventListener('click', async () => {
+  const clientId = document.getElementById('ad-clientId').value;
+  const groupId  = document.getElementById('ad-group').value;
+  const amount   = document.getElementById('ad-amount').value;
+  addDebtModalError.style.display = 'none';
+  if (!clientId || !amount) {
+    addDebtModalError.textContent = 'Заполните все поля';
+    addDebtModalError.style.display = 'block'; return;
+  }
+  const saveBtn = document.getElementById('add-debt-modal-save');
+  saveBtn.textContent = 'Добавление…'; saveBtn.disabled = true;
+  const { ok, data } = await apiFetch('/api/Finance/add-debt', {
+    method: 'POST',
+    body: JSON.stringify({ clientId: parseInt(clientId), groupId: parseInt(groupId), amount: parseFloat(amount) }),
+  });
+  saveBtn.textContent = 'Добавить'; saveBtn.disabled = false;
+  if (ok) {
+    addDebtModal.classList.remove('open');
+    delete cache.accDebts;
+    delete cache.accSummary;
+    const pane = document.getElementById('acc-debts');
+    delete pane.dataset.loaded;
+    loadPane('acc-debts');
+    loadPane('acc-summary');
+  } else {
+    addDebtModalError.textContent = getField(data, 'message') ?? 'Ошибка';
+    addDebtModalError.style.display = 'block';
+  }
+});
+
+// Modal: добавить тренера
+const addTrainerModal      = document.getElementById('add-trainer-modal');
+const addTrainerModalError = document.getElementById('add-trainer-modal-error');
+
+document.getElementById('add-trainer-btn')?.addEventListener('click', async () => {
+  addTrainerModalError.style.display = 'none';
+  const dirs = await fetchCached('adminDirections', '/api/Directions');
+  const dirSelect = document.getElementById('tr-direction');
+  if (dirs && dirSelect) {
+    dirSelect.innerHTML = dirs.map(d => `<option value="${d.direction_id ?? d.directionId}">${d.name}</option>`).join('');
+  }
+  ['tr-lastName','tr-firstName','tr-phone','tr-email'].forEach(id => document.getElementById(id).value = '');
+  addTrainerModal.classList.add('open');
+});
+addTrainerModal?.addEventListener('click', e => { if (e.target === addTrainerModal) addTrainerModal.classList.remove('open'); });
+document.getElementById('add-trainer-modal-cancel')?.addEventListener('click', () => addTrainerModal.classList.remove('open'));
+
+document.getElementById('add-trainer-modal-save')?.addEventListener('click', async () => {
+  const lastName    = document.getElementById('tr-lastName').value.trim();
+  const firstName   = document.getElementById('tr-firstName').value.trim();
+  const directionId = document.getElementById('tr-direction').value;
+  const phone       = document.getElementById('tr-phone').value.trim();
+  const email       = document.getElementById('tr-email').value.trim();
+  addTrainerModalError.style.display = 'none';
+  if (!lastName || !firstName) {
+    addTrainerModalError.textContent = 'Заполните фамилию и имя';
+    addTrainerModalError.style.display = 'block'; return;
+  }
+  const saveBtn = document.getElementById('add-trainer-modal-save');
+  saveBtn.textContent = 'Сохранение…'; saveBtn.disabled = true;
+  const { ok, data } = await apiFetch('/api/Trainers', {
+    method: 'POST',
+    body: JSON.stringify({ lastName, firstName, direction_id: parseInt(directionId), phone, email }),
+  });
+  saveBtn.textContent = 'Сохранить'; saveBtn.disabled = false;
+  if (ok) {
+    addTrainerModal.classList.remove('open');
+    delete cache.adminTrainers;
+    const pane = document.getElementById('admin-trainers');
+    delete pane.dataset.loaded;
+    loadPane('admin-trainers');
+  } else {
+    addTrainerModalError.textContent = getField(data, 'message') ?? 'Ошибка сохранения';
+    addTrainerModalError.style.display = 'block';
   }
 });
 

@@ -89,6 +89,10 @@
       <div class="page" id="page-accountant">
         <div id="acc-stats"></div>
         <div class="card">
+          <div class="card-head">
+            <h3>Финансы</h3>
+            <button class="btn btn-primary btn-sm" id="add-debt-btn">+ Долг</button>
+          </div>
           <div class="card-body">
             <div class="tabs">
               <button class="tab-btn active" data-tab="acc-summary">Сводка</button>
@@ -111,8 +115,9 @@
             <div id="admin-action-btns">
               <button class="btn btn-primary btn-sm" id="add-client-btn">+ Клиент</button>
               <button class="btn btn-ghost btn-sm" id="add-user-btn">+ Пользователь</button>
+              <button class="btn btn-ghost btn-sm" id="add-trainer-btn" style="display:none">+ Тренер</button>
               <button class="btn btn-ghost btn-sm" id="add-group-btn" style="display:none">+ Группа</button>
-            </div>
+          </div>
           </div>
           <div class="card-body">
             <div class="tabs">
@@ -250,6 +255,24 @@
     </div>
   </div>
 </div>
+
+<!-- MODAL: добавить долг -->
+<div class="modal-overlay" id="add-debt-modal">
+  <div class="modal">
+    <div class="modal-head"><h3>Добавить долг</h3></div>
+    <div class="modal-body">
+      <div id="add-debt-modal-error" class="error-box" style="display:none"></div>
+      <div class="field"><label>Клиент ID *</label><input id="ad-clientId" type="number" /></div>
+      <div class="field"><label>Группа *</label><select id="ad-group"></select></div>
+      <div class="field"><label>Сумма *</label><input id="ad-amount" type="number" /></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="add-debt-modal-cancel">Отмена</button>
+      <button class="btn btn-primary" id="add-debt-modal-save">Добавить</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: добавить группу -->
 <div class="modal-overlay" id="add-group-modal">
   <div class="modal">
@@ -296,6 +319,30 @@
     </div>
   </div>
 </div>
+
+<!-- MODAL: добавить тренера -->
+<div class="modal-overlay" id="add-trainer-modal">
+  <div class="modal">
+    <div class="modal-head"><h3>Новый тренер</h3></div>
+    <div class="modal-body">
+      <div id="add-trainer-modal-error" class="error-box" style="display:none"></div>
+      <div class="form-row">
+        <div class="field"><label>Фамилия *</label><input id="tr-lastName" /></div>
+        <div class="field"><label>Имя *</label><input id="tr-firstName" /></div>
+      </div>
+      <div class="field"><label>Направление *</label><select id="tr-direction"></select></div>
+      <div class="form-row">
+        <div class="field"><label>Телефон</label><input id="tr-phone" /></div>
+        <div class="field"><label>Email</label><input id="tr-email" type="email" /></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="add-trainer-modal-cancel">Отмена</button>
+      <button class="btn btn-primary" id="add-trainer-modal-save">Сохранить</button>
+    </div>
+  </div>
+</div>
+
 <script src="api.js"></script>
 <script src="dashboard.js"></script>
 </body>
