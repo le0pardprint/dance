@@ -54,7 +54,7 @@ document.querySelectorAll('.tabs').forEach(tabsEl => {
           if (addGroupBtn)   addGroupBtn.style.display   = paneId === 'admin-groups'   ? '' : 'none';
           if (addTrainerBtn) addTrainerBtn.style.display  = paneId === 'admin-trainers' ? '' : 'none';
           if (addClassBtn)   addClassBtn.style.display    = paneId === 'admin-groups'   ? '' : 'none';
-      }
+        }
       }
     });
   });
@@ -405,6 +405,39 @@ async function loadPane(paneId) {
   if (addGroupBtn3) addGroupBtn3.style.display = '';
   const addClassBtn = document.getElementById('add-class-btn');
   if (addClassBtn) addClassBtn.style.display = '';
+  break;
+}
+
+case 'admin-schedule': {
+  const data = await fetchCached('adminSchedule', '/api/Classes');
+  if (!data) { showErr(el, 'Ошибка загрузки'); return; }
+  el.innerHTML = buildTable(
+    ['Дата','Время','Группа','Тренер','Статус',''],
+    data.map(c => [
+      fmtDate(c.date),
+      c.time ?? '—',
+      c.group?.name ?? '—',
+      c.trainer ? `${c.trainer.firstName} ${c.trainer.lastName}` : '—',
+      badge(c.status),
+      `<button class="btn btn-ghost btn-sm change-class-status-btn" data-id="${c.class_id}" data-status="${c.status}">Статус</button>`
+    ]),
+    'Расписание пусто'
+  );
+  el.querySelectorAll('.change-class-status-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.getElementById('sm-class-id').value = btn.dataset.id;
+      document.getElementById('sm-status').value   = btn.dataset.status;
+      document.getElementById('status-modal').classList.add('open');
+    });
+  });
+  document.getElementById('add-client-btn').style.display = 'none';
+  document.getElementById('add-user-btn').style.display   = 'none';
+  const addGroupBtn = document.getElementById('add-group-btn');
+  if (addGroupBtn) addGroupBtn.style.display = 'none';
+  const addTrainerBtn = document.getElementById('add-trainer-btn');
+  if (addTrainerBtn) addTrainerBtn.style.display = 'none';
+  const addClassBtn = document.getElementById('add-class-btn');
+  if (addClassBtn) addClassBtn.style.display = 'none';
   break;
 }
 
@@ -865,6 +898,7 @@ document.getElementById('sm-save').addEventListener('click', async () => {
   if (ok) {
     statusModal.classList.remove('open');
     delete cache.trainerSchedule;
+    delete cache.adminSchedule;
     const pane = document.getElementById('trainer-schedule');
     delete pane.dataset.loaded;
     loadPane('trainer-schedule');
@@ -1139,6 +1173,7 @@ if (ROLE === 'Trainer') {
   loadPane('admin-clients');
   loadPane('admin-trainers');
   loadPane('admin-groups');
+  loadPane('admin-schedule');
   document.getElementById('add-client-btn').style.display = '';
   document.getElementById('add-user-btn').style.display   = '';
 }
