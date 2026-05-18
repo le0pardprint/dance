@@ -603,8 +603,16 @@ function renderClientsTable(el, data) {
 const modal      = document.getElementById('add-client-modal');
 const modalError = document.getElementById('modal-error');
 
-document.getElementById('add-client-btn').addEventListener('click', () => {
-  clearModalForm(); modal.classList.add('open');
+document.getElementById('add-client-btn').addEventListener('click', async () => {
+  clearModalForm();
+  // Загружаем группы для селекта
+  const groups = await fetchCached('adminGroups', '/api/Groups');
+  const grpSelect = document.getElementById('f-group');
+  if (groups && grpSelect) {
+    grpSelect.innerHTML = '<option value="">— Без группы —</option>' +
+      groups.map(g => `<option value="${g.group_id ?? g.groupId}">${g.name}</option>`).join('');
+  }
+  modal.classList.add('open');
 });
 document.getElementById('modal-cancel').addEventListener('click', () => modal.classList.remove('open'));
 modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('open'); });
@@ -620,27 +628,41 @@ document.getElementById('modal-save').addEventListener('click', async () => {
     modalError.textContent = 'Заполните фамилию и имя';
     modalError.style.display = 'block'; return;
   }
-  const saveBtn = document.getElementById('modal-save');
+const saveBtn = document.getElementById('modal-save');
   saveBtn.textContent = 'Сохранение…'; saveBtn.disabled = true;
   const { ok, data } = await apiFetch('/api/Clients', {
     method: 'POST',
     body: JSON.stringify({ lastName, firstName, age: age ? parseInt(age) : null, phone, email }),
   });
-  saveBtn.textContent = 'Сохранить'; saveBtn.disabled = false;
-  if (ok) {
-    modal.classList.remove('open');
-    delete cache.adminClients;
-    const pane = document.getElementById('admin-clients');
-    delete pane.dataset.loaded;
-    loadPane('admin-clients');
-  } else {
+  if (!ok) {
+    saveBtn.textContent = 'Сохранить'; saveBtn.disabled = false;
     modalError.textContent = getField(data, 'message') ?? 'Ошибка сохранения';
-    modalError.style.display = 'block';
+    modalError.style.display = 'block'; return;
   }
+  const clientId = data?.client_id ?? data?.clientId;
+  // Если выбрана группа — добавляем регистрацию и абонемент
+  if (groupId && clientId) {
+    await apiFetch('/api/Registration', {
+      method: 'POST',
+      body: JSON.stringify({ client_id: clientId, group_id: parseInt(groupId), registration_date: new Date().toISOString() }),
+    });
+    if (amount) {
+      await apiFetch('/api/Subscriptions', {
+        method: 'POST',
+        body: JSON.stringify({ client_id: clientId, group_id: parseInt(groupId), amount: parseFloat(amount), status: 'Активен' }),
+      });
+    }
+  }
+  saveBtn.textContent = 'Сохранить'; saveBtn.disabled = false;
+  modal.classList.remove('open');
+  delete cache.adminClients;
+  const pane = document.getElementById('admin-clients');
+  delete pane.dataset.loaded;
+  loadPane('admin-clients');
 });
 
 function clearModalForm() {
-  ['f-lastName','f-firstName','f-age','f-phone','f-email'].forEach(id => {
+  ['f-lastName','f-firstName','f-age','f-phone','f-email','f-amount'].forEach(id => {
     document.getElementById(id).value = '';
   });
   modalError.style.display = 'none';
