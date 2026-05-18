@@ -661,18 +661,28 @@ function renderClientsTable(el, data) {
       }
     });
   });
-  el.querySelectorAll('.reg-client-btn').forEach(btn => {
-  btn.addEventListener('click', async () => {
-    document.getElementById('reg-client-id').value   = btn.dataset.id;
-    document.getElementById('reg-client-name').textContent = btn.dataset.name;
-    const groups = await fetchCached('adminGroups', '/api/Groups');
-    const grpSelect = document.getElementById('reg-group');
-    if (groups && grpSelect) {
-      grpSelect.innerHTML = groups.map(g => `<option value="${g.group_id ?? g.groupId}">${g.name}</option>`).join('');
-    }
-    document.getElementById('reg-client-modal').classList.add('open');
+    el.querySelectorAll('.reg-client-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        document.getElementById('reg-client-id').value = btn.dataset.id;
+        document.getElementById('reg-client-name').textContent = btn.dataset.name;
+        document.getElementById('reg-amount').value = '';
+        regClientModalError.style.display = 'none';
+
+        const groups = await fetchCached('adminGroups', '/api/Groups');
+        const grpSelect = document.getElementById('reg-group');
+        if (groups && grpSelect) {
+          grpSelect.innerHTML = groups.map(g => `<option value="${g.group_id ?? g.groupId}">${g.name}</option>`).join('');
+        }
+
+        // Загружаем занятия для первой группы
+        await loadClassesForGroup(grpSelect.value);
+
+        // При смене группы — обновляем занятия
+        grpSelect.onchange = async () => await loadClassesForGroup(grpSelect.value);
+
+        regClientModal.classList.add('open');
+    });
   });
-});
 }
 
 // Modal: добавить клиента
@@ -1109,6 +1119,19 @@ document.getElementById('add-class-modal-save')?.addEventListener('click', async
     addClassModalError.style.display = 'block';
   }
 });
+
+async function loadClassesForGroup(groupId) {
+  const clsSelect = document.getElementById('reg-class');
+  clsSelect.innerHTML = '<option value="">— Без конкретного занятия —</option>';
+  if (!groupId) return;
+  const { ok, data } = await apiFetch(`/api/Classes/bygroup/${groupId}`);
+  if (ok && data?.length) {
+    clsSelect.innerHTML += data
+      .filter(c => c.status === 'Запланировано')
+      .map(c => `<option value="${c.class_id}">${fmtDate(c.date)} ${c.time ?? ''}</option>`)
+      .join('');
+  }
+}
 
 // Modal: записать клиента в группу
 const regClientModal      = document.getElementById('reg-client-modal');
