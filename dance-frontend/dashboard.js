@@ -256,11 +256,17 @@ async function loadPane(paneId) {
       ]), 'Нет')}` : ''}
   `;
   el.querySelectorAll('.add-sub-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.getElementById('ad-clientId').value = btn.dataset.id;
-      document.getElementById('add-debt-modal').classList.add('open');
-    });
+  btn.addEventListener('click', async () => {
+    document.getElementById('ad-clientId').value = btn.dataset.id;
+    // Загружаем группы
+    const groups = await fetchCached('accGroups', '/api/Groups');
+    const grpSelect = document.getElementById('ad-group');
+    if (groups && grpSelect) {
+      grpSelect.innerHTML = groups.map(g => `<option value="${g.group_id ?? g.groupId}">${g.name}</option>`).join('');
+    }
+    document.getElementById('add-debt-modal').classList.add('open');
   });
+});
   break;
 }
     case 'acc-revenue': {
