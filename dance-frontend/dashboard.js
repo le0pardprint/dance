@@ -531,7 +531,7 @@ function renderClientsTable(el, data) {
       <td>${c.age ?? '—'}</td>
       <td>${c.phone ?? '—'}</td>
       <td style="color:var(--muted)">${c.email ?? '—'}</td>
-      <td style="color:var(--muted);font-size:12px">User ID: ${userId}</td>
+      <td style="color:var(--muted);font-size:12px">Client ID: ${id} | User ID: ${userId}</td>
       <td>
         <button class="btn btn-ghost btn-sm edit-client-btn" data-id="${id}"
           data-ln="${c.lastName??''}" data-fn="${c.firstName??''}"
