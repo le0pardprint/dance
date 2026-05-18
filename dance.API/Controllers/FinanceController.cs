@@ -20,22 +20,13 @@ namespace dance.API.Controllers
 
         // GET: api/finance/revenue
         [HttpGet("revenue")]
-        public async Task<IActionResult> GetRevenue([FromQuery] DateTime? start, [FromQuery] DateTime? end)
+        public async Task<IActionResult> GetRevenue()
         {
-            var query = _dbContext.Subscriptions.AsQueryable();
-
-            // Убираем фильтрацию по Registration_date (этого поля нет)
-            // Просто считаем общую сумму
-            var totalRevenue = await query
+            var totalRevenue = await _dbContext.Subscriptions
                 .Where(s => s.Status == "Активен" || s.Status == "Оплачен")
                 .SumAsync(s => s.Amount);
 
-            // Убираем группировку по месяцам (нет даты)
-            return Ok(new
-            {
-                totalRevenue = totalRevenue,
-                message = "Фильтрация по датам временно отключена (нет поля Registration_date в Subscription)"
-            });
+            return Ok(new { totalRevenue });
         }
 
         // GET: api/finance/debts
@@ -66,28 +57,7 @@ namespace dance.API.Controllers
             return Ok(clientsWithDebts);
         }
 
-        // GET: api/finance/teacher-payments
-        [HttpGet("teacher-payments")]
-        public async Task<IActionResult> GetTeacherPayments([FromQuery] int year, [FromQuery] int month)
-        {
-            var payments = await _dbContext.Trainers
-                .Select(t => new
-                {
-                    t.Trainer_id,
-                    t.FirstName,
-                    t.LastName,
-                    ClassesCount = _dbContext.Classes
-                        .Count(c => c.Trainer_id == t.Trainer_id && c.Status == "Проведено"),
-                    HourlyRate = 1000,
-                    TotalPayment = _dbContext.Classes
-                        .Count(c => c.Trainer_id == t.Trainer_id && c.Status == "Проведено") * 1000
-                })
-                .ToListAsync();
-
-            return Ok(new { year, month, payments });
-        }
-
-        // GET: api/finance/payments-summary
+        // GET: api/finance/payments-summary — с именами клиентов
         [HttpGet("payments-summary")]
         public async Task<IActionResult> GetPaymentsSummary()
         {
@@ -101,15 +71,64 @@ namespace dance.API.Controllers
                 })
                 .ToListAsync();
 
+            // Детали по каждому абонементу с именем клиента
+            var details = await _dbContext.Subscriptions
+                .Include(s => s.Client)
+                .Include(s => s.Group)
+                .Select(s => new
+                {
+                    s.Sub_id,
+                    ClientName = s.Client.LastName + " " + s.Client.FirstName,
+                    GroupName = s.Group.Name,
+                    s.Amount,
+                    s.Status
+                })
+                .OrderBy(s => s.Status)
+                .ToListAsync();
+
             var totalSubscriptions = await _dbContext.Subscriptions.CountAsync();
             var totalAmount = await _dbContext.Subscriptions.SumAsync(s => s.Amount);
 
             return Ok(new
             {
-                summary = summary,
-                totalSubscriptions = totalSubscriptions,
-                totalAmount = totalAmount
+                summary,
+                details,
+                totalSubscriptions,
+                totalAmount
             });
         }
+
+        // POST: api/finance/add-debt — добавить долг клиенту
+        [HttpPost("add-debt")]
+        public async Task<IActionResult> AddDebt([FromBody] AddDebtDto dto)
+        {
+            var client = await _dbContext.Clients.FindAsync(dto.ClientId);
+            if (client == null)
+                return NotFound(new { message = "Клиент не найден" });
+
+            var group = await _dbContext.Groups.FindAsync(dto.GroupId);
+            if (group == null)
+                return NotFound(new { message = "Группа не найдена" });
+
+            var subscription = new Subscription
+            {
+                Client_id = dto.ClientId,
+                Group_id = dto.GroupId,
+                Amount = dto.Amount,
+                Status = "Активен"
+            };
+
+            _dbContext.Subscriptions.Add(subscription);
+            await _dbContext.SaveChangesAsync();
+
+            return Ok(new { message = "Долг добавлен", subscription });
+        }
+    }
+
+    public class AddDebtDto
+    {
+        public int ClientId { get; set; }
+        public int GroupId { get; set; }
+        public decimal Amount { get; set; }
     }
 }
