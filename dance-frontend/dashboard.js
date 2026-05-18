@@ -48,12 +48,8 @@ document.querySelectorAll('.tabs').forEach(tabsEl => {
         pane.classList.add('active');
         if (!pane.dataset.loaded) loadPane(paneId);
         if (ROLE === 'Admin') {
-          const addClientBtn  = document.getElementById('add-client-btn');
-          const addUserBtn    = document.getElementById('add-user-btn');
-          const addGroupBtn   = document.getElementById('add-group-btn');
-          if (addClientBtn) addClientBtn.style.display = paneId === 'admin-clients' ? '' : 'none';
-          if (addUserBtn)   addUserBtn.style.display   = paneId === 'admin-clients' ? '' : 'none';
-          if (addGroupBtn)  addGroupBtn.style.display  = paneId === 'admin-groups'  ? '' : 'none';
+          const addGroupBtn = document.getElementById('add-group-btn');
+          if (addGroupBtn) addGroupBtn.style.display = paneId === 'admin-groups' ? '' : 'none';
         }
       }
     });
@@ -311,8 +307,6 @@ async function loadPane(paneId) {
           btn.textContent = expanded ? 'Расписание' : 'Скрыть';
         });
       });
-      document.getElementById('add-client-btn').style.display = 'none';
-      document.getElementById('add-user-btn').style.display   = 'none';
       const addGroupBtn2 = document.getElementById('add-group-btn');
       if (addGroupBtn2) addGroupBtn2.style.display = 'none';
       break;
@@ -357,8 +351,6 @@ async function loadPane(paneId) {
           document.getElementById('group-status-modal').classList.add('open');
         });
       });
-      document.getElementById('add-client-btn').style.display = 'none';
-      document.getElementById('add-user-btn').style.display   = 'none';
       const addGroupBtn3 = document.getElementById('add-group-btn');
       if (addGroupBtn3) addGroupBtn3.style.display = '';
       break;
